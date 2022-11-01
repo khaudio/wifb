@@ -97,7 +97,10 @@ static bool txMode(CONFIG_MODE_TRANSMIT);
 static int numSamplesOffset(0);
 
 /* Audio I/O */
-static Buffer::AtomicRingBuffer<int> ringBuffer(RING_BUFFER_LENGTH, RING_LENGTH);
+static Buffer::AtomicRingBuffer<int> ringBuffer(
+        RING_BUFFER_LENGTH,
+        RING_LENGTH
+    );
 static I2S::Bus i2s;
 
 /* Hardware button */
