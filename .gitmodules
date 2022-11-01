@@ -1,0 +1,3 @@
+[submodule "main/lib/ringbuffer"]
+	path = main/lib/ringbuffer
+	url = git@github.com:khaudio/ringbuffer.git
