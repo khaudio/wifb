@@ -4,7 +4,12 @@
  */
 
 /** TODO:
+ *      try atomic multi read ring buffer
+ *      and modify num readers whenever
+ *      a client connection status changes
+ * 
  *      wrap all console output in _DEBUG def guards
+ *          switch to print macro
  * 
  *      transmitter
  *          single ring buffer multiple sends
@@ -97,7 +102,7 @@ static bool txMode(CONFIG_MODE_TRANSMIT);
 static int numSamplesOffset(0);
 
 /* Audio I/O */
-static Buffer::AtomicRingBuffer<int> ringBuffer(
+static Buffer::AtomicMultiReadRingBuffer<int_fast32_t> ringBuffer(
         RING_BUFFER_LENGTH,
         RING_LENGTH
     );
@@ -175,13 +180,19 @@ void ring_buffer_to_i2s(void)
 
 std::shared_ptr<WIFBClient> get_client_from_mac(const uint8_t addr[6])
 {
+    #ifdef _DEBUG
     std::cout << "Retrieving client from mac addr...\n";
+    #endif
+
     for (std::shared_ptr<WIFBClient> c: connectedClients)
     {
         if (c == nullptr) continue;
         else if (match_mac_addr(c->mac, addr)) return c;
     }
+    #ifdef _DEBUG
     std::cout << "Client not found in index\n";
+    #endif
+
     return nullptr;
 }
 
@@ -197,8 +208,11 @@ void ap_event_handler(
     if (eventId == WIFI_EVENT_AP_STACONNECTED)
     {
         wifi_event_ap_staconnected_t* event = reinterpret_cast<wifi_event_ap_staconnected_t*>(data);
+
+        #ifdef _DEBUG
         std::cout << "Station " << mac_addr_string(event->mac) << " connected\n";
         std::cout << "eventBase == " << eventBase << '\n';
+        #endif
     }
     else if (eventId == WIFI_EVENT_AP_STADISCONNECTED)
     {
@@ -209,10 +223,13 @@ void ap_event_handler(
         {
             client->connected = false;
             client->sock = 0;
+
+            #ifdef _DEBUG
             std::cout << "Disconnected client:\n";
             std::cout << "\t  ip: " << ip_addr_string(client->ip) << '\n';
             std::cout << "\t mac: " << mac_addr_string(client->mac) << '\n';
             std::cout << "\tsock: " << client->sock << '\n';
+            #endif
         }
     }
 }
@@ -316,19 +333,30 @@ void purge_disconnected_clients()
 
 void socket_server(void)
 {
+    #ifdef _DEBUG
     std::cout << "Starting socket server\n";
-    struct sockaddr_in serverAddress, clientAddress;
+    #endif
 
+    struct sockaddr_in serverAddress, clientAddress;
+    
+    #ifdef _DEBUG
     std::cout << "Creating socket...\n";
+    #endif
+
     // Create a socket that we will listen upon.
     int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock < 0)
     {
+        #ifdef _DEBUG
         std::cerr << "socket: " << sock << errno << '\n';
+        #endif
+
         return;
     }
 
+    #ifdef _DEBUG
     std::cout << "Binding socket to port...\n";
+    #endif
 
     // Bind our server socket to a port.
     serverAddress.sin_family = AF_INET;
@@ -337,17 +365,25 @@ void socket_server(void)
     int rc = bind(sock, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
     if (rc < 0)
     {
+        #ifdef _DEBUG
         std::cerr << "bind: " << rc << errno << '\n';
+        #endif
+
         return;
     }
 
+    #ifdef _DEBUG
     std::cout << "Listening for connections...\n";
+    #endif
 
     // Flag the socket as listening for new connections.
     rc = listen(sock, 5);
     if (rc < 0)
     {
+        #ifdef _DEBUG
         std::cerr << "listen: " << rc << errno << '\n';
+        #endif
+
         return;
     }
 
@@ -365,7 +401,10 @@ void socket_server(void)
         clientSock = accept(sock, (struct sockaddr*)&clientAddress, &clientAddressLength);
         if (clientSock < 0)
         {
+            #ifdef _DEBUG
             std::cerr << "accept: " << clientSock << " " << errno << '\n';
+            #endif
+
             return;
         }
 
@@ -378,7 +417,10 @@ void socket_server(void)
         if (newClient)
         {
             // Create new client
+            #ifdef _DEBUG
             std::cout << "New client found:\n";
+            #endif
+
             client = std::make_shared<WIFBClient>();
             connectedClients.push_back(client);
             
@@ -394,25 +436,35 @@ void socket_server(void)
                     reinterpret_cast<uint8_t*>(&clientAddress.sin_addr.s_addr),
                     4
                 );
+            #ifdef _DEBUG
             std::cout << "New client created\n";
+            #endif
+
         }
         else
         {
+            #ifdef _DEBUG
             std::cout << "Existing client found:\n";
+            #endif
+
         }
         // Update client status in index
         client->sock = clientSock;
         client->connected = true;
 
+        #ifdef _DEBUG
         std::cout << "\t  ip: " << ip_addr_string(client->ip) << '\n';
         std::cout << "\t mac: " << mac_addr_string(client->mac) << '\n';
         std::cout << "\tsock: " << client->sock << '\n';
+        #endif
 
         // Launch handler for individual client
         client_sock_handler(client);
         // std::async(std::launch::async, &client_sock_handler, client);
 
+        #ifdef _DEBUG
         std::cout << "Client handler launched\n";
+        #endif
         
         delay_ticks_count(&delayCounter, 100, 1);
     }

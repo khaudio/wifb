@@ -41,7 +41,7 @@ target_compile_options(${COMPONENT_LIB}
 target_compile_definitions(${COMPONENT_LIB}
     PRIVATE
         CONFIG_MODE_TRANSMIT=1
-        RINGBUFF_AUTO_FIRST_ROTATE
+        RINGBUFF_AUTO_FIRST_ROTATE=1
         $<$<CONFIG:Debug>:DEBUG_BUILD;_DEBUG>
         $<$<CONFIG:Release>:>
 )
