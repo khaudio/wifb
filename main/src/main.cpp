@@ -25,12 +25,15 @@
 #include <iostream>
 #include <cstring>
 
+#include "debugmacros.h"
+
 #include "ringbuffer.h"
 #include "espdelay.h"
 #include "esp32button.h"
 #include "espi2s.h"
 #include "ltcstaticwavetables.h"
 #include "wifbnetwork.h"
+#include "debugmacros.h"
 
 #include "private.h"
 
@@ -180,18 +183,14 @@ void ring_buffer_to_i2s(void)
 
 std::shared_ptr<WIFBClient> get_client_from_mac(const uint8_t addr[6])
 {
-    #ifdef _DEBUG
-    std::cout << "Retrieving client from mac addr...\n";
-    #endif
+    DEBUG("Retrieving client from mac addr...\n");
 
     for (std::shared_ptr<WIFBClient> c: connectedClients)
     {
         if (c == nullptr) continue;
         else if (match_mac_addr(c->mac, addr)) return c;
     }
-    #ifdef _DEBUG
-    std::cout << "Client not found in index\n";
-    #endif
+    DEBUG("Client not found in index\n");
 
     return nullptr;
 }
@@ -224,12 +223,10 @@ void ap_event_handler(
             client->connected = false;
             client->sock = 0;
 
-            #ifdef _DEBUG
-            std::cout << "Disconnected client:\n";
-            std::cout << "\t  ip: " << ip_addr_string(client->ip) << '\n';
-            std::cout << "\t mac: " << mac_addr_string(client->mac) << '\n';
-            std::cout << "\tsock: " << client->sock << '\n';
-            #endif
+            DEBUG_OUT("Disconnected client:\n");
+            DEBUG_OUT("\t  ip: " << ip_addr_string(client->ip) << '\n');
+            DEBUG_OUT("\t mac: " << mac_addr_string(client->mac) << '\n');
+            DEBUG_OUT("\tsock: " << client->sock << '\n');
         }
     }
 }
@@ -307,9 +304,8 @@ void purge_disconnected_clients()
         }
     }
 
-    #ifdef _DEBUG
-    std::cout << length << " disconnected clients\n";
-    #endif
+
+    DEBUG_OUT(length << " disconnected clients\n");
     
     for (int i(0); i < length; ++i)
     {
@@ -333,15 +329,11 @@ void purge_disconnected_clients()
 
 void socket_server(void)
 {
-    #ifdef _DEBUG
-    std::cout << "Starting socket server\n";
-    #endif
+    DEBUG_OUT("Starting socket server\n");
 
     struct sockaddr_in serverAddress, clientAddress;
     
-    #ifdef _DEBUG
-    std::cout << "Creating socket...\n";
-    #endif
+    DEBUG_OUT("Creating socket...\n");
 
     // Create a socket that we will listen upon.
     int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -354,9 +346,7 @@ void socket_server(void)
         return;
     }
 
-    #ifdef _DEBUG
-    std::cout << "Binding socket to port...\n";
-    #endif
+    DEBUG_OUT("Binding socket to port...\n");
 
     // Bind our server socket to a port.
     serverAddress.sin_family = AF_INET;
@@ -365,24 +355,18 @@ void socket_server(void)
     int rc = bind(sock, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
     if (rc < 0)
     {
-        #ifdef _DEBUG
-        std::cerr << "bind: " << rc << errno << '\n';
-        #endif
+        DEBUG_OUT("bind: " << rc << errno << '\n');
 
         return;
     }
 
-    #ifdef _DEBUG
-    std::cout << "Listening for connections...\n";
-    #endif
+    DEBUG_OUT("Listening for connections...\n");
 
     // Flag the socket as listening for new connections.
     rc = listen(sock, 5);
     if (rc < 0)
     {
-        #ifdef _DEBUG
-        std::cerr << "listen: " << rc << errno << '\n';
-        #endif
+        DEBUG_OUT("listen: " << rc << errno << '\n');
 
         return;
     }
@@ -401,9 +385,7 @@ void socket_server(void)
         clientSock = accept(sock, (struct sockaddr*)&clientAddress, &clientAddressLength);
         if (clientSock < 0)
         {
-            #ifdef _DEBUG
-            std::cerr << "accept: " << clientSock << " " << errno << '\n';
-            #endif
+            DEBUG_OUT("accept: " << clientSock << " " << errno << '\n');
 
             return;
         }
@@ -417,9 +399,7 @@ void socket_server(void)
         if (newClient)
         {
             // Create new client
-            #ifdef _DEBUG
-            std::cout << "New client found:\n";
-            #endif
+            DEBUG_OUT("New client found:\n");
 
             client = std::make_shared<WIFBClient>();
             connectedClients.push_back(client);
@@ -436,9 +416,7 @@ void socket_server(void)
                     reinterpret_cast<uint8_t*>(&clientAddress.sin_addr.s_addr),
                     4
                 );
-            #ifdef _DEBUG
-            std::cout << "New client created\n";
-            #endif
+            DEBUG_OUT("New client created\n");
 
         }
         else
@@ -452,19 +430,15 @@ void socket_server(void)
         client->sock = clientSock;
         client->connected = true;
 
-        #ifdef _DEBUG
-        std::cout << "\t  ip: " << ip_addr_string(client->ip) << '\n';
-        std::cout << "\t mac: " << mac_addr_string(client->mac) << '\n';
-        std::cout << "\tsock: " << client->sock << '\n';
-        #endif
+        DEBUG_OUT("\t  ip: " << ip_addr_string(client->ip) << '\n');
+        DEBUG_OUT("\t mac: " << mac_addr_string(client->mac) << '\n');
+        DEBUG_OUT("\tsock: " << client->sock << '\n');
 
         // Launch handler for individual client
         client_sock_handler(client);
         // std::async(std::launch::async, &client_sock_handler, client);
 
-        #ifdef _DEBUG
-        std::cout << "Client handler launched\n";
-        #endif
+        DEBUG_OUT("Client handler launched\n");
         
         delay_ticks_count(&delayCounter, 100, 1);
     }
@@ -506,15 +480,16 @@ void sta_event_handler(
 {
     if ((eventBase == WIFI_EVENT) && (eventId == WIFI_EVENT_STA_START))
     {
-        std::cout << "Wifi started; connecting to AP...\n";
+        DEBUG_OUT("Wifi started; connecting to AP...\n");
+        
         esp_wifi_connect();
     }
     else if ((eventBase == WIFI_EVENT) && (eventId == WIFI_EVENT_STA_DISCONNECTED))
     {
-        std::cout << "Failed to connect to AP\n";
+        DEBUG_ERR("Failed to connect to AP\n");
         if (retryNum++ < MAX_RETRY_COUNT) {
             esp_wifi_connect();
-            std::cout << "Retrying connection to AP\n";
+            DEBUG_ERR("Retrying connection to AP\n");
         }
         else
         {
@@ -524,7 +499,7 @@ void sta_event_handler(
     else if ((eventBase == IP_EVENT) && (eventId == IP_EVENT_STA_GOT_IP))
     {
         ip_event_got_ip_t* event = reinterpret_cast<ip_event_got_ip_t*>(data);
-        std::cout << "Got IP: " << ip_addr_string(event->ip_info.ip) << '\n';
+        DEBUG_OUT("Got IP: " << ip_addr_string(event->ip_info.ip) << '\n');
         retryNum = 0;
         xEventGroupSetBits(staEventGroup, WIFI_CONNECTED_BIT);
     }
@@ -585,7 +560,7 @@ int config_sta(void)
     esp_wifi_get_mac(WIFI_IF_STA, selfMacAddr);
     esp_wifi_start();
 
-    std::cout << "STA started\n";
+    DEBUG_OUT("STA started\n");
 
     /* Block while connecting */
     EventBits_t bits = xEventGroupWaitBits(
@@ -600,17 +575,17 @@ int config_sta(void)
     if (bits & WIFI_CONNECTED_BIT)
     {
         rc = 0;
-        std::cout << "Connected to SSID " << CONFIG_SSID << '\n';
+        DEBUG_OUT("Connected to SSID " << CONFIG_SSID << '\n');
     }
     else if (bits & WIFI_FAIL_BIT)
     {
         rc = 1;
-        std::cout << "Failed to connect to SSID " << CONFIG_SSID << '\n';
+        DEBUG_OUT("Failed to connect to SSID " << CONFIG_SSID << '\n');
     }
     else
     {
         rc = 2;
-        std::cout << "Unexpected event\n";
+        DEBUG_OUT("Unexpected event\n");
     }
 
     esp_event_handler_instance_unregister(
@@ -629,23 +604,23 @@ int config_sta(void)
 
 void socket_client(void)
 {
-    std::cout << "Starting socket client...\n";
-    std::cout << "Creating socket...\n";
+    DEBUG_OUT("Starting socket client...\n");
+    DEBUG_OUT("Creating socket...\n");
     int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    std::cout << "socket rc: " << sock << '\n';
+    DEBUG_OUT("socket rc: " << sock << '\n');
 
     struct sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
     inet_pton(AF_INET, "192.168.4.1", &serverAddress.sin_addr.s_addr);
     serverAddress.sin_port = htons(CONFIG_PORT);
 
-    std::cout << "Connecting to server...\n";
+    DEBUG_OUT("Connecting to server...\n");
     int rc = connect(sock, (struct sockaddr*)&serverAddress, sizeof(struct sockaddr_in));
-    std::cout << "connect rc: " << rc << '\n';
+    DEBUG_OUT("connect rc: " << rc << '\n');
 
     send(sock, selfMacAddr, 6, 0);
-    std::cout << "Send self mac addr: " << mac_addr_string(selfMacAddr) << '\n';
+    DEBUG_OUT("Send self mac addr: " << mac_addr_string(selfMacAddr) << '\n');
 
     int delayCounter(0);
     int chunkSize(TRANSMIT_CHUNKSIZE);
@@ -669,46 +644,46 @@ void socket_client(void)
         delay_ticks_count(&delayCounter, 100, 1);
     }
 
-    std::cout << "Closing socket...\n";
+    DEBUG_OUT("Closing socket...\n");
 
     rc = close(sock);
-    std::cout << "close rc: " << rc << '\n';
-
-    std::cout << "Socket closed\n";
+    
+    DEBUG_OUT("close rc: " << rc << '\n');
+    DEBUG_OUT("Socket closed\n");
 }
 
 /* Main */
 
 extern "C" void app_main(void)
 {
-    std::cout << "Initializing WIFB...\n";
+    DEBUG_OUT("Initializing WIFB...\n")
 
     /* Configure button and set transmit mode */
 
-    std::cout << "Configuring mode\n";
+    DEBUG_OUT("Configuring mode\n")
     button.set_hold_duration_ms(100);
     // Add a non-blocking while loop for button duration
     // txMode = button.read();
-    std::cout << "Mode set to " << (txMode ? "transmit\n" : "receive\n");
+    DEBUG_OUT("Mode set to " << (txMode ? "transmit\n" : "receive\n"))
     
     /* Configure i2s */
     
-    std::cout << "Configuring i2s...\n";
+    DEBUG_OUT("Configuring i2s...\n")
     i2s.set_pin_master_clock(I2S_MCK);
     i2s.set_pin_bit_clock(I2S_BCK);
     i2s.set_pin_word_select(I2S_WS);
-    i2s.set_pin_data_out(I2S_DO);
+    i2s.set_pin_data(I2S_DO);
     i2s.set_pin_data_in(I2S_DI);
     i2s.set_bit_depth(BITS_PER_SAMPLE);
     i2s.set_sample_rate(SAMPLE_RATE);
     i2s.set_buffer_length(ringBuffer.buffer_length());
     i2s.set_auto_clear(false);
     i2s.start();
-    std::cout << "i2s configuration complete\n";
+    DEBUG_OUT("i2s configuration complete\n")
     
     /* Configure networking */
 
-    std::cout << "Configuring networking...\n";
+    DEBUG_OUT("Configuring networking...\n")
 
     int rc;
     if (txMode)
@@ -725,14 +700,14 @@ extern "C" void app_main(void)
     }
     if (rc)
     {
-        std::cerr << "Errors encountered\n";
-        std::cerr << "WIFB initialization failed\n";
-        std::cerr << "Rebooting...\n";
+        DEBUG_ERR("Errors encountered\n")
+        DEBUG_ERR("WIFB initialization failed\n")
+        DEBUG_ERR("Rebooting...\n")
         esp_restart();
     }
     
-    std::cout << "Networking configured\n";
-    std::cout << "WIFB initialized\n";
+    DEBUG_OUT("Networking configured\n")
+    DEBUG_OUT("WIFB initialized\n")
 
     if (txMode)
     {
