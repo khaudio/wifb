@@ -3,13 +3,13 @@
 
 #include <iostream>
 
-#ifdef _DEBUG
+#if _DEBUG
 #define DEBUG_OUT(x) std::cout << x;
 #else
 #define DEBUG_OUT(x)
 #endif
 
-#ifdef _DEBUG
+#if _DEBUG
 #define DEBUG_ERR(x) std::cerr << x;
 #else
 #define DEBUG_ERR(x)

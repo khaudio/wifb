@@ -277,7 +277,11 @@ template <typename T>
 void Bus::read(std::vector<T>* data, int_fast32_t length)
 {
     constexpr int_fast32_t typeSize(sizeof(T));
+    #if _DEBUG
+    read_bytes(reinterpret_cast<void*>(&(data->at(0))), length * typeSize);
+    #else
     read_bytes(reinterpret_cast<void*>(&((*data)[0])), length * typeSize);
+    #endif
 }
 
 template void Bus::write<int8_t>(std::vector<int8_t>*, int_fast32_t);

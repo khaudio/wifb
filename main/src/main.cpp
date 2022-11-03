@@ -4,17 +4,9 @@
  */
 
 /** TODO:
- *      try atomic multi read ring buffer
- *      and modify num readers whenever
- *      a client connection status changes
- * 
- *      wrap all console output in _DEBUG def guards
- *          switch to print macro
- * 
- *      transmitter
- *          single ring buffer multiple sends
- *              or
- *          ring buffer per client
+ *      atomic multi read ring buffer
+ *          modify num readers whenever a
+ *          client connection status changes
  * 
  *      client
  *          use WIFBClient struct
@@ -26,6 +18,7 @@
 #include <cstring>
 
 #include "debugmacros.h"
+#include "private.h"
 
 #include "ringbuffer.h"
 #include "espdelay.h"
@@ -33,9 +26,7 @@
 #include "espi2s.h"
 #include "ltcstaticwavetables.h"
 #include "wifbnetwork.h"
-#include "debugmacros.h"
 
-#include "private.h"
 
 /*                              Macros                              */
 
@@ -119,7 +110,7 @@ static std::vector<std::shared_ptr<WIFBClient>> connectedClients;
 static int retryNum = 0;
 static EventGroupHandle_t staEventGroup;
 
-/*                            Prototypes                            */
+/*                           Declarations                           */
 
 /* Audio */
 
@@ -164,9 +155,33 @@ extern "C" void app_main(void);
 
 void i2s_to_ring_buffer(void)
 {
+    DEBUG_OUT("Getting available samples...\n");
+
     /* Read from i2s input to ring buffer */
     const int unwritten(ringBuffer.unwritten());
-    i2s.read(ringBuffer.get_write_buffer(), unwritten);
+
+    DEBUG_OUT(+unwritten << " unwritten samples");
+    DEBUG_OUT(" available to write to ring buffer\n");
+
+    if (!unwritten) return;
+
+    try
+    {
+        DEBUG_OUT("Reading from i2s...\n");
+
+        i2s.read(ringBuffer.get_write_buffer(), unwritten);
+
+        DEBUG_OUT("Read from i2s\n");
+    }
+    catch (...)
+    {
+        DEBUG_ERR("Error reading from i2s\n");
+        return;
+    }
+
+    DEBUG_OUT("Reporting " << unwritten);
+    DEBUG_OUT(" written samples to ring buffer\n");
+
     ringBuffer.report_written_samples(unwritten);
 }
 
@@ -175,6 +190,15 @@ void ring_buffer_to_i2s(void)
     /* Write from ring buffer to i2s output */
     if (!ringBuffer.buffers_buffered()) return;
     const int unread(ringBuffer.unread());
+    
+    #if _DEBUG
+    if (!unread)
+    {
+        DEBUG_ERR("This point should not be reachable\n");
+        return;
+    }
+    #endif
+    
     i2s.write(ringBuffer.get_read_buffer(), unread);
     ringBuffer.report_read_samples(unread);
 }
@@ -183,14 +207,15 @@ void ring_buffer_to_i2s(void)
 
 std::shared_ptr<WIFBClient> get_client_from_mac(const uint8_t addr[6])
 {
-    DEBUG("Retrieving client from mac addr...\n");
+    DEBUG_OUT("Retrieving client from mac addr...\n");
 
     for (std::shared_ptr<WIFBClient> c: connectedClients)
     {
         if (c == nullptr) continue;
         else if (match_mac_addr(c->mac, addr)) return c;
     }
-    DEBUG("Client not found in index\n");
+
+    DEBUG_OUT("Client not found in index\n");
 
     return nullptr;
 }
@@ -208,10 +233,8 @@ void ap_event_handler(
     {
         wifi_event_ap_staconnected_t* event = reinterpret_cast<wifi_event_ap_staconnected_t*>(data);
 
-        #ifdef _DEBUG
-        std::cout << "Station " << mac_addr_string(event->mac) << " connected\n";
-        std::cout << "eventBase == " << eventBase << '\n';
-        #endif
+        DEBUG_OUT("Station " << mac_addr_string(event->mac) << " connected\n");
+        DEBUG_OUT("eventBase == " << eventBase << '\n');
     }
     else if (eventId == WIFI_EVENT_AP_STADISCONNECTED)
     {
@@ -282,9 +305,9 @@ int config_ap(void)
 
 void purge_disconnected_clients()
 {
-    #ifdef _DEBUG
-    int lengthBeforePurge(static_cast<int>(connectedClients.size());
-    std::cout << "Purging ";
+    #if _DEBUG
+    int lengthBeforePurge(static_cast<int>(connectedClients.size()));
+    DEBUG_OUT("Purging ");
     #endif
 
     std::vector<std::vector<std::shared_ptr<WIFBClient>>::iterator> purgeList;
@@ -304,7 +327,6 @@ void purge_disconnected_clients()
         }
     }
 
-
     DEBUG_OUT(length << " disconnected clients\n");
     
     for (int i(0); i < length; ++i)
@@ -312,17 +334,20 @@ void purge_disconnected_clients()
         connectedClients.erase(purgeList[i]);
     }
 
-    #ifdef _DEBUG
-    int numPurged(lengthBeforePurge - static_cast<int>(connectedClients.size()))
+    #if _DEBUG
+    int numPurged(
+            lengthBeforePurge
+            - static_cast<int>(connectedClients.size())
+        );
     if (numPurged == length)
     {
-        std::cout << "Sucessfully purged ";
-        std::cout << length << " disconnected clients\n";
+        DEBUG_OUT("Sucessfully purged ");
+        DEBUG_OUT(length << " disconnected clients\n");
     }
     else
     {
-        std::cerr << "Error: purged " << numPurged;
-        std::cerr << " of " << length << " disconnected clients\n";
+        DEBUG_ERR("Error: purged " << numPurged);
+        DEBUG_ERR(" of " << length << " disconnected clients\n");
     }
     #endif
 }
@@ -339,10 +364,7 @@ void socket_server(void)
     int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock < 0)
     {
-        #ifdef _DEBUG
-        std::cerr << "socket: " << sock << errno << '\n';
-        #endif
-
+        DEBUG_ERR("socket: " << sock << errno << '\n');
         return;
     }
 
@@ -356,7 +378,6 @@ void socket_server(void)
     if (rc < 0)
     {
         DEBUG_OUT("bind: " << rc << errno << '\n');
-
         return;
     }
 
@@ -367,7 +388,6 @@ void socket_server(void)
     if (rc < 0)
     {
         DEBUG_OUT("listen: " << rc << errno << '\n');
-
         return;
     }
 
@@ -386,7 +406,6 @@ void socket_server(void)
         if (clientSock < 0)
         {
             DEBUG_OUT("accept: " << clientSock << " " << errno << '\n');
-
             return;
         }
 
@@ -417,15 +436,12 @@ void socket_server(void)
                     4
                 );
             DEBUG_OUT("New client created\n");
-
         }
         else
         {
-            #ifdef _DEBUG
-            std::cout << "Existing client found:\n";
-            #endif
-
+            DEBUG_OUT("Existing client found:\n");
         }
+
         // Update client status in index
         client->sock = clientSock;
         client->connected = true;
@@ -435,8 +451,8 @@ void socket_server(void)
         DEBUG_OUT("\tsock: " << client->sock << '\n');
 
         // Launch handler for individual client
-        client_sock_handler(client);
-        // std::async(std::launch::async, &client_sock_handler, client);
+        // client_sock_handler(client);
+        std::async(std::launch::async, &client_sock_handler, client);
 
         DEBUG_OUT("Client handler launched\n");
         
@@ -448,23 +464,69 @@ void client_sock_handler(std::shared_ptr<WIFBClient> client)
 {
     int delayCounter(0);
     int rc;
-    int chunkSize(TRANSMIT_CHUNKSIZE);
+
+    int_fast8_t numReaders = ringBuffer.num_readers();
+
+    DEBUG_OUT("Current num readers: " << +numReaders);
+    DEBUG_OUT("\nSetting new num readers to: ")
+    DEBUG_OUT(+((numReaders > 1) ? (numReaders + 1) : numReaders));
+    DEBUG_OUT('\n');
+
+    /* Set the number of connected clients.
+    The first client is already accounted for
+    in the ring buffer read counter. */
+    ringBuffer.set_num_readers(
+            (numReaders > 1)
+            ? (numReaders + 1)
+            : numReaders
+        );
+
+    DEBUG_OUT("Num readers set to " << +ringBuffer.num_readers() << '\n');
 
     while (client->connected)
     {
+        DEBUG_OUT("Buffering i2s to ring buffer\n");
+
         i2s_to_ring_buffer();
-        if (ringBuffer.buffered() >= chunkSize)
+
+        DEBUG_OUT(ringBuffer.buffered() << " samples buffered");
+        DEBUG_OUT(" of total ring sample length of ");
+        DEBUG_OUT(ringBuffer.size() << '\n');
+        DEBUG_OUT("Transmit chunk size is " << (TRANSMIT_CHUNKSIZE) << '\n');
+
+        if (ringBuffer.buffered() >= (TRANSMIT_CHUNKSIZE))
         {
+            DEBUG_OUT("Sending data to client\n");
+
             rc = send(
                     client->sock,
                     ringBuffer.get_read_byte(),
-                    chunkSize,
+                    (TRANSMIT_CHUNKSIZE),
                     0
                 );
-            ringBuffer.report_read_bytes(chunkSize);
+            
+            DEBUG_OUT("Reporting " << (TRANSMIT_CHUNKSIZE) << " read bytes to buffer\n");
+            
+            ringBuffer.report_read_bytes(TRANSMIT_CHUNKSIZE);
         }
+
+        DEBUG_OUT("Incrementing delay counter\n");
+
         delay_ticks_count(&delayCounter, 100, 1);
+
+        DEBUG_OUT("Cycling...\n");
     }
+
+    DEBUG_OUT("Decrementing num readers for disconnected client\n");
+
+    /* Do not decrement the read counter below one */
+    ringBuffer.set_num_readers(
+            (numReaders > 1)
+            ? (numReaders - 1)
+            : numReaders
+        );
+
+    DEBUG_OUT("Closing client socket\n");
 
     close(client->sock);
 }
@@ -481,7 +543,6 @@ void sta_event_handler(
     if ((eventBase == WIFI_EVENT) && (eventId == WIFI_EVENT_STA_START))
     {
         DEBUG_OUT("Wifi started; connecting to AP...\n");
-        
         esp_wifi_connect();
     }
     else if ((eventBase == WIFI_EVENT) && (eventId == WIFI_EVENT_STA_DISCONNECTED))
@@ -499,6 +560,7 @@ void sta_event_handler(
     else if ((eventBase == IP_EVENT) && (eventId == IP_EVENT_STA_GOT_IP))
     {
         ip_event_got_ip_t* event = reinterpret_cast<ip_event_got_ip_t*>(data);
+
         DEBUG_OUT("Got IP: " << ip_addr_string(event->ip_info.ip) << '\n');
         retryNum = 0;
         xEventGroupSetBits(staEventGroup, WIFI_CONNECTED_BIT);
@@ -623,23 +685,22 @@ void socket_client(void)
     DEBUG_OUT("Send self mac addr: " << mac_addr_string(selfMacAddr) << '\n');
 
     int delayCounter(0);
-    int chunkSize(TRANSMIT_CHUNKSIZE);
     
-    ringBuffer.rotate_write_index();
+    // ringBuffer.rotate_write_index();
 
     while (true)
     {
         ring_buffer_to_i2s();
-        if (ringBuffer.available() >= chunkSize)
+        if (ringBuffer.available() >= (TRANSMIT_CHUNKSIZE))
         {
             rc = recv(
                     sock,
                     ringBuffer.get_write_byte(),
-                    chunkSize,
+                    (TRANSMIT_CHUNKSIZE),
                     0
                 );
 
-            ringBuffer.report_written_bytes(chunkSize);
+            ringBuffer.report_written_bytes(TRANSMIT_CHUNKSIZE);
         }
         delay_ticks_count(&delayCounter, 100, 1);
     }
@@ -656,7 +717,11 @@ void socket_client(void)
 
 extern "C" void app_main(void)
 {
-    DEBUG_OUT("Initializing WIFB...\n")
+    DEBUG_OUT("Initializing WIFB...\n");
+
+    /* Set buffer to have one reader initially */
+
+    ringBuffer.set_num_readers(1);
 
     /* Configure button and set transmit mode */
 
@@ -664,33 +729,45 @@ extern "C" void app_main(void)
     button.set_hold_duration_ms(100);
     // Add a non-blocking while loop for button duration
     // txMode = button.read();
-    DEBUG_OUT("Mode set to " << (txMode ? "transmit\n" : "receive\n"))
+    DEBUG_OUT("Mode set to " << (txMode ? "transmit\n" : "receive\n"));
     
     /* Configure i2s */
     
-    DEBUG_OUT("Configuring i2s...\n")
+    DEBUG_OUT("Configuring i2s...\n");
     i2s.set_pin_master_clock(I2S_MCK);
     i2s.set_pin_bit_clock(I2S_BCK);
     i2s.set_pin_word_select(I2S_WS);
-    i2s.set_pin_data(I2S_DO);
+    i2s.set_pin_data_out(I2S_DO);
     i2s.set_pin_data_in(I2S_DI);
     i2s.set_bit_depth(BITS_PER_SAMPLE);
     i2s.set_sample_rate(SAMPLE_RATE);
     i2s.set_buffer_length(ringBuffer.buffer_length());
     i2s.set_auto_clear(false);
     i2s.start();
-    DEBUG_OUT("i2s configuration complete\n")
+    DEBUG_OUT("i2s configuration complete\n");
     
     /* Configure networking */
 
-    DEBUG_OUT("Configuring networking...\n")
+    DEBUG_OUT("Configuring networking...\n");
 
     int rc;
     if (txMode)
     {
         /* Enable soft AP mode for transmitter */
         rc = config_ap();
-        ringBuffer.rotate_write_index();
+
+        /* Pre-buffer samples */
+        while (ringBuffer.available())
+        {
+            DEBUG_OUT("Pre-buffering samples from i2s...\n");
+            i2s_to_ring_buffer();
+        }
+        DEBUG_OUT("Pre-buffered " << ringBuffer.buffered());
+        DEBUG_OUT(" samples from i2s");
+        DEBUG_OUT(" of total ring sample length of ");
+        DEBUG_OUT(ringBuffer.size() << '\n');
+
+        // ringBuffer.rotate_write_index();
     }
     else
     {
@@ -700,14 +777,14 @@ extern "C" void app_main(void)
     }
     if (rc)
     {
-        DEBUG_ERR("Errors encountered\n")
-        DEBUG_ERR("WIFB initialization failed\n")
-        DEBUG_ERR("Rebooting...\n")
+        DEBUG_ERR("Errors encountered\n");
+        DEBUG_ERR("WIFB initialization failed\n");
+        DEBUG_ERR("Rebooting...\n");
         esp_restart();
     }
     
-    DEBUG_OUT("Networking configured\n")
-    DEBUG_OUT("WIFB initialized\n")
+    DEBUG_OUT("Networking configured\n");
+    DEBUG_OUT("WIFB initialized\n");
 
     if (txMode)
     {

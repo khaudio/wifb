@@ -1,14 +1,15 @@
 idf_component_register(
     SRCS
-        "./src/main.cpp"
+        "./src/ringbuffer.cpp"
         "./src/espdelay.cpp"
         "./src/esp32button.cpp"
         "./src/espi2s.cpp"
         "./src/wifbnetwork.cpp"
+        "./src/main.cpp"
     INCLUDE_DIRS
         "."
-        "./src"
         "./inc"
+        "./src"
     REQUIRES
         freertos
         esp_common
@@ -21,28 +22,25 @@ idf_component_register(
         log
 )
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/ringbuffer)
-
-list(APPEND LIBRARIES ringbuffer multibuffer)
+list(APPEND LIBRARIES)
 
 target_compile_options(${COMPONENT_LIB}
     PRIVATE
         -fexceptions
         -fpermissive
-        -Wno-error
-        -Wno-error=int-in-bool-context
-        -Wno-error=sequence-point
         -Wshadow-compatible-local
+        -Wno-error
+        -Wno-error=sequence-point
         $<$<CONFIG:Debug>:-O0 -g -Wall>
         $<$<CONFIG:Release>:-O2>
-        $<$<CONFIG:RelWithDebInfo>:-O2 -g>
 )
 
 target_compile_definitions(${COMPONENT_LIB}
     PRIVATE
         CONFIG_MODE_TRANSMIT=1
         RINGBUFF_AUTO_FIRST_ROTATE=1
-        $<$<CONFIG:Debug>:DEBUG_BUILD;_DEBUG>
+        _DEBUG=0
+        $<$<CONFIG:Debug>:DEBUG_BUILD;_DEBUG;>
         $<$<CONFIG:Release>:>
 )
 
