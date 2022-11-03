@@ -4,14 +4,24 @@
  */
 
 /** TODO:
- *      atomic multi read ring buffer
- *          modify num readers whenever a
- *          client connection status changes
+ *      server
+ *          timecode generator/transmitter
+ *              different network socket or interleave
+ *              to either channel
+ *              other i2s interface
+ *                  builtin?
+ *                      8-bit should be fine for LTC
+ *              update timecode library
+ *                  better formatting
+ *                  read LTC input
  * 
  *      client
  *          use WIFBClient struct
  *              maybe a single one in connectedClients for self
  *          manage connection status with wifi connection events
+ *          handle server offline/online reconnect
+ *          receive timecode
+ *              LTC output
  */
 
 #include <iostream>
