@@ -38,27 +38,6 @@
 
 /*                              Macros                              */
 
-/* I2S master clock */
-#define I2S_MCK                     (GPIO_NUM_0)
-
-/* I2S word select */
-#define I2S_WS                      (GPIO_NUM_26)
-
-/* I2S bit clock */
-#define I2S_BCK                     (GPIO_NUM_14)
-
-/* I2S data */
-#define I2S_DI                      (GPIO_NUM_35)
-
-/* I2S output data */
-#define I2S_DO                      (GPIO_NUM_25)
-
-/* Shutdown signal output */
-#define I2S_SHUTDOWN                (GPIO_NUM_21)
-
-/* Momentary switch */
-#define BUTTON_PIN                  (GPIO_NUM_35)
-
 /* 48 KHz sample rate */
 #ifndef SAMPLE_RATE
 #define SAMPLE_RATE                 48000
@@ -90,7 +69,8 @@
 #define TRANSMIT_CHUNKSIZE          ((RING_BUFFER_SIZE) / 16) // 128 bytes
 #endif
 
-/* Whether this unit is in transmit mode */
+/* Whether this unit is in transmit mode
+if not overridden */
 #ifndef CONFIG_MODE_TRANSMIT
 #define CONFIG_MODE_TRANSMIT        0
 #endif
@@ -108,14 +88,11 @@ static Buffer::AtomicMultiReadRingBuffer<int_fast32_t> ringBuffer(
         RING_BUFFER_LENGTH,
         RING_LENGTH
     );
-static I2S::Bus i2s;
 
 /* Hardware button */
 static Esp32Button::DualActionButton button(BUTTON_PIN);
 
-WIFBClient self;
-// static uint8_t selfMacAddr[6];
-
+static WIFBClient self;
 static std::vector<std::shared_ptr<WIFBClient>> connectedClients;
 static int retryNum = 0;
 static EventGroupHandle_t staEventGroup;
