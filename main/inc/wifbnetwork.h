@@ -43,7 +43,9 @@ struct WIFBClient
     uint8_t mac[6];
     uint8_t ip[4];
     std::atomic_int sock{0};
-    std::atomic_bool connected{false};
+    std::atomic_bool
+        networkConnected{false},
+        socketConnected{false};
 };
 
 std::string mac_addr_string(uint8_t addr[6]);

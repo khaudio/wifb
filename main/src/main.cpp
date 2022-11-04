@@ -16,10 +16,8 @@
  *                  read LTC input
  * 
  *      client
- *          use WIFBClient struct
- *              maybe a single one in connectedClients for self
- *          manage connection status with wifi connection events
- *          handle server offline/online reconnect
+ *          check socket connect return codes
+ *              < 0 vs >= 0
  *          receive timecode
  *              LTC output
  */
@@ -34,8 +32,8 @@
 #include "espdelay.h"
 #include "esp32button.h"
 #include "espi2s.h"
-#include "ltcstaticwavetables.h"
 #include "wifbnetwork.h"
+#include "ltcstaticwavetables.h"
 
 
 /*                              Macros                              */
@@ -81,7 +79,7 @@
 
 /* Number of buffers in ring buffer */
 #ifndef RING_LENGTH
-#define RING_LENGTH                 8
+#define RING_LENGTH                 2
 #endif
 
 /* Ring buffer size in bytes */
@@ -115,7 +113,9 @@ static I2S::Bus i2s;
 /* Hardware button */
 static Esp32Button::DualActionButton button(BUTTON_PIN);
 
-static uint8_t selfMacAddr[6];
+WIFBClient self;
+// static uint8_t selfMacAddr[6];
+
 static std::vector<std::shared_ptr<WIFBClient>> connectedClients;
 static int retryNum = 0;
 static EventGroupHandle_t staEventGroup;
@@ -253,7 +253,7 @@ void ap_event_handler(
         std::shared_ptr<WIFBClient> client = get_client_from_mac(event->mac);
         if (client != nullptr)
         {
-            client->connected = false;
+            client->socketConnected = false;
             client->sock = 0;
 
             DEBUG_OUT("Disconnected client:\n");
@@ -308,7 +308,7 @@ int config_ap(void)
 
     esp_wifi_set_mode(WIFI_MODE_AP);
     esp_wifi_set_config(WIFI_IF_AP, &config);
-    esp_wifi_get_mac(WIFI_IF_AP, selfMacAddr);
+    esp_wifi_get_mac(WIFI_IF_AP, self.mac);
     esp_err_t rc = esp_wifi_start();
     return (rc != ESP_OK) ? rc : 0;
 }
@@ -330,7 +330,7 @@ void purge_disconnected_clients()
     {
         std::shared_ptr<WIFBClient> c = *it;
         if (c == nullptr) continue;
-        else if (!c->connected)
+        else if (!c->socketConnected)
         {
             purgeList.push_back(it);
             ++length;
@@ -454,7 +454,7 @@ void socket_server(void)
 
         // Update client status in index
         client->sock = clientSock;
-        client->connected = true;
+        client->socketConnected = true;
 
         DEBUG_OUT("\t  ip: " << ip_addr_string(client->ip) << '\n');
         DEBUG_OUT("\t mac: " << mac_addr_string(client->mac) << '\n');
@@ -493,7 +493,7 @@ void client_sock_handler(std::shared_ptr<WIFBClient> client)
 
     DEBUG_OUT("Num readers set to " << +ringBuffer.num_readers() << '\n');
 
-    while (client->connected)
+    while (client->socketConnected)
     {
         DEBUG_OUT("Buffering i2s to ring buffer\n");
 
@@ -553,13 +553,20 @@ void sta_event_handler(
     if ((eventBase == WIFI_EVENT) && (eventId == WIFI_EVENT_STA_START))
     {
         DEBUG_OUT("Wifi started; connecting to AP...\n");
+
         esp_wifi_connect();
     }
     else if ((eventBase == WIFI_EVENT) && (eventId == WIFI_EVENT_STA_DISCONNECTED))
     {
         DEBUG_ERR("Failed to connect to AP\n");
-        if (retryNum++ < MAX_RETRY_COUNT) {
+        
+        self.networkConnected = false;
+        self.socketConnected = false;
+
+        if (retryNum++ < MAX_RETRY_COUNT)
+        {
             esp_wifi_connect();
+        
             DEBUG_ERR("Retrying connection to AP\n");
         }
         else
@@ -572,6 +579,16 @@ void sta_event_handler(
         ip_event_got_ip_t* event = reinterpret_cast<ip_event_got_ip_t*>(data);
 
         DEBUG_OUT("Got IP: " << ip_addr_string(event->ip_info.ip) << '\n');
+        
+        self.networkConnected = true;
+        self.socketConnected = false;
+        
+        memcpy(
+                self.ip,
+                reinterpret_cast<uint8_t*>(&event->ip_info.ip),
+                4
+            );
+
         retryNum = 0;
         xEventGroupSetBits(staEventGroup, WIFI_CONNECTED_BIT);
     }
@@ -600,6 +617,7 @@ int config_sta(void)
 
     esp_event_handler_instance_t instanceId;
     esp_event_handler_instance_t instanceIp;
+
     esp_event_handler_instance_register(
             WIFI_EVENT,
             ESP_EVENT_ANY_ID,
@@ -629,7 +647,7 @@ int config_sta(void)
 
     esp_wifi_set_mode(WIFI_MODE_STA);
     esp_wifi_set_config(WIFI_IF_STA, &config);
-    esp_wifi_get_mac(WIFI_IF_STA, selfMacAddr);
+    esp_wifi_get_mac(WIFI_IF_STA, self.mac);
     esp_wifi_start();
 
     DEBUG_OUT("STA started\n");
@@ -678,7 +696,9 @@ void socket_client(void)
 {
     DEBUG_OUT("Starting socket client...\n");
     DEBUG_OUT("Creating socket...\n");
+
     int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    self.sock = sock;
 
     DEBUG_OUT("socket rc: " << sock << '\n');
 
@@ -688,17 +708,23 @@ void socket_client(void)
     serverAddress.sin_port = htons(CONFIG_PORT);
 
     DEBUG_OUT("Connecting to server...\n");
-    int rc = connect(sock, (struct sockaddr*)&serverAddress, sizeof(struct sockaddr_in));
+    int rc = connect(
+            sock,
+            (struct sockaddr*)&serverAddress,
+            sizeof(struct sockaddr_in)
+        );
     DEBUG_OUT("connect rc: " << rc << '\n');
 
-    send(sock, selfMacAddr, 6, 0);
-    DEBUG_OUT("Send self mac addr: " << mac_addr_string(selfMacAddr) << '\n');
+    self.socketConnected = (rc >= 0);
+
+    send(sock, self.mac, 6, 0);
+    DEBUG_OUT("Send self mac addr: " << mac_addr_string(self.mac) << '\n');
 
     int delayCounter(0);
     
     // ringBuffer.rotate_write_index();
 
-    while (true)
+    while (self.socketConnected)
     {
         ring_buffer_to_i2s();
         if (ringBuffer.available() >= (TRANSMIT_CHUNKSIZE))
@@ -714,11 +740,15 @@ void socket_client(void)
         }
         delay_ticks_count(&delayCounter, 100, 1);
     }
-
+    
     DEBUG_OUT("Closing socket...\n");
 
     rc = close(sock);
-    
+
+    /* Flush buffer */
+
+    ringBuffer.fill(0);
+
     DEBUG_OUT("close rc: " << rc << '\n');
     DEBUG_OUT("Socket closed\n");
 }
@@ -751,7 +781,10 @@ extern "C" void app_main(void)
     i2s.set_pin_data_in(I2S_DI);
     i2s.set_bit_depth(BITS_PER_SAMPLE);
     i2s.set_sample_rate(SAMPLE_RATE);
-    i2s.set_buffer_length(ringBuffer.buffer_length());
+    i2s.set_buffer_length(
+            ringBuffer.buffer_length(),
+            ringBuffer.ring_length()
+        );
     i2s.set_auto_clear(false);
     i2s.start();
     DEBUG_OUT("i2s configuration complete\n");
@@ -804,7 +837,10 @@ extern "C" void app_main(void)
     else
     {
         // std::async(std::launch::async, &ring_buffer_to_i2s);
-        socket_client();
+        while (true)
+        {
+            socket_client();
+        }
     }
 }
 

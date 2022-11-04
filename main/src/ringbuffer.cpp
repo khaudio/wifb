@@ -1064,7 +1064,6 @@ inline void AtomicMultiReadRingBuffer<T>::report_read_samples(int_fast32_t lengt
     AtomicRingBuffer<T>::report_read_samples(length);
 }
 
-
 template <typename T>
 std::vector<T> AtomicMultiReadRingBuffer<T>::read()
 {
@@ -1077,12 +1076,12 @@ std::vector<T> AtomicMultiReadRingBuffer<T>::read()
 
 /*                               Base                               */
 
-template class Buffer::Base<int8_t, int_fast8_t>;
+// template class Buffer::Base<int8_t, int_fast8_t>;
 template class Buffer::Base<uint8_t, int_fast8_t>;
 template class Buffer::Base<int16_t, int_fast8_t>;
-template class Buffer::Base<uint16_t, int_fast8_t>;
+// template class Buffer::Base<uint16_t, int_fast8_t>;
 template class Buffer::Base<int32_t, int_fast8_t>;
-template class Buffer::Base<uint32_t, int_fast8_t>;
+// template class Buffer::Base<uint32_t, int_fast8_t>;
 
 template class Buffer::Base<int, int_fast8_t>;
 
@@ -1091,12 +1090,12 @@ template class Buffer::Base<double, int_fast8_t>;
 
 /*                       Atomic Indices Base                        */
 
-template class Buffer::Base<int8_t, std::atomic_int_fast8_t>;
+// template class Buffer::Base<int8_t, std::atomic_int_fast8_t>;
 template class Buffer::Base<uint8_t, std::atomic_int_fast8_t>;
 template class Buffer::Base<int16_t, std::atomic_int_fast8_t>;
-template class Buffer::Base<uint16_t, std::atomic_int_fast8_t>;
+// template class Buffer::Base<uint16_t, std::atomic_int_fast8_t>;
 template class Buffer::Base<int32_t, std::atomic_int_fast8_t>;
-template class Buffer::Base<uint32_t, std::atomic_int_fast8_t>;
+// template class Buffer::Base<uint32_t, std::atomic_int_fast8_t>;
 
 template class Buffer::Base<int, std::atomic_int_fast8_t>;
 
@@ -1161,12 +1160,12 @@ template class Buffer::Base<double, std::atomic_int_fast8_t>;
 
 /*           Atomic Indices Multi Read Counter Ring Buffer          */
 
-template class Buffer::AtomicMultiReadRingBuffer<int8_t>;
+// template class Buffer::AtomicMultiReadRingBuffer<int8_t>;
 template class Buffer::AtomicMultiReadRingBuffer<uint8_t>;
 template class Buffer::AtomicMultiReadRingBuffer<int16_t>;
-template class Buffer::AtomicMultiReadRingBuffer<uint16_t>;
+// template class Buffer::AtomicMultiReadRingBuffer<uint16_t>;
 template class Buffer::AtomicMultiReadRingBuffer<int32_t>;
-template class Buffer::AtomicMultiReadRingBuffer<uint32_t>;
+// template class Buffer::AtomicMultiReadRingBuffer<uint32_t>;
 
 template class Buffer::AtomicMultiReadRingBuffer<int>;
 

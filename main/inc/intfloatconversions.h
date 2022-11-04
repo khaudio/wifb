@@ -223,6 +223,7 @@ constexpr void int_to_float(std::vector<F>* converted, std::vector<I>* values, i
 template float get_zero<float>();
 template double get_zero<double>();
 template long double get_zero<long double>();
+
 template int8_t get_zero<int8_t>();
 template uint8_t get_zero<uint8_t>();
 template int16_t get_zero<int16_t>();
@@ -244,400 +245,400 @@ template float roundf<float>(float);
 template double roundf<double>(double);
 template long double roundf<long double>(long double);
 
-template int8_t float_to_int<float, int8_t>(float);
-template uint8_t float_to_int<float, uint8_t>(float);
-template int16_t float_to_int<float, int16_t>(float);
-template uint16_t float_to_int<float, uint16_t>(float);
-template int32_t float_to_int<float, int32_t>(float);
-template uint32_t float_to_int<float, uint32_t>(float);
-template int64_t float_to_int<float, int64_t>(float);
-template uint64_t float_to_int<float, uint64_t>(float);
-
-template int float_to_int<float, int>(float);
-
-template int8_t float_to_int<double, int8_t>(double);
-template uint8_t float_to_int<double, uint8_t>(double);
-template int16_t float_to_int<double, int16_t>(double);
-template uint16_t float_to_int<double, uint16_t>(double);
-template int32_t float_to_int<double, int32_t>(double);
-template uint32_t float_to_int<double, uint32_t>(double);
-template int64_t float_to_int<double, int64_t>(double);
-template uint64_t float_to_int<double, uint64_t>(double);
-
-template int float_to_int<double, int>(double);
-
-template int8_t float_to_int<long double, int8_t>(long double);
-template uint8_t float_to_int<long double, uint8_t>(long double);
-template int16_t float_to_int<long double, int16_t>(long double);
-template uint16_t float_to_int<long double, uint16_t>(long double);
-template int32_t float_to_int<long double, int32_t>(long double);
-template uint32_t float_to_int<long double, uint32_t>(long double);
-template int64_t float_to_int<long double, int64_t>(long double);
-template uint64_t float_to_int<long double, uint64_t>(long double);
-
-template int float_to_int<long double, int>(long double);
-
-template void float_to_int<float, int8_t>(int8_t*, float*);
-template void float_to_int<float, uint8_t>(uint8_t*, float*);
-template void float_to_int<float, int16_t>(int16_t*, float*);
-template void float_to_int<float, uint16_t>(uint16_t*, float*);
-template void float_to_int<float, int32_t>(int32_t*, float*);
-template void float_to_int<float, uint32_t>(uint32_t*, float*);
-template void float_to_int<float, int64_t>(int64_t*, float*);
-template void float_to_int<float, uint64_t>(uint64_t*, float*);
-
-template void float_to_int<float, int>(int*, float*);
-
-template void float_to_int<double, int8_t>(int8_t*, double*);
-template void float_to_int<double, uint8_t>(uint8_t*, double*);
-template void float_to_int<double, int16_t>(int16_t*, double*);
-template void float_to_int<double, uint16_t>(uint16_t*, double*);
-template void float_to_int<double, int32_t>(int32_t*, double*);
-template void float_to_int<double, uint32_t>(uint32_t*, double*);
-template void float_to_int<double, int64_t>(int64_t*, double*);
-template void float_to_int<double, uint64_t>(uint64_t*, double*);
-
-template void float_to_int<double, int>(int*, double*);
-
-template void float_to_int<long double, int8_t>(int8_t*, long double*);
-template void float_to_int<long double, uint8_t>(uint8_t*, long double*);
-template void float_to_int<long double, int16_t>(int16_t*, long double*);
-template void float_to_int<long double, uint16_t>(uint16_t*, long double*);
-template void float_to_int<long double, int32_t>(int32_t*, long double*);
-template void float_to_int<long double, uint32_t>(uint32_t*, long double*);
-template void float_to_int<long double, int64_t>(int64_t*, long double*);
-template void float_to_int<long double, uint64_t>(uint64_t*, long double*);
-
-template void float_to_int<long double, int>(int*, long double*);
-
-template void float_to_int<float, int8_t>(int8_t*, float*, int);
-template void float_to_int<float, uint8_t>(uint8_t*, float*, int);
-template void float_to_int<float, int16_t>(int16_t*, float*, int);
-template void float_to_int<float, uint16_t>(uint16_t*, float*, int);
-template void float_to_int<float, int32_t>(int32_t*, float*, int);
-template void float_to_int<float, uint32_t>(uint32_t*, float*, int);
-template void float_to_int<float, int64_t>(int64_t*, float*, int);
-template void float_to_int<float, uint64_t>(uint64_t*, float*, int);
-
-template void float_to_int<float, int>(int*, float*, int);
-
-template void float_to_int<double, int8_t>(int8_t*, double*, int);
-template void float_to_int<double, uint8_t>(uint8_t*, double*, int);
-template void float_to_int<double, int16_t>(int16_t*, double*, int);
-template void float_to_int<double, uint16_t>(uint16_t*, double*, int);
-template void float_to_int<double, int32_t>(int32_t*, double*, int);
-template void float_to_int<double, uint32_t>(uint32_t*, double*, int);
-template void float_to_int<double, int64_t>(int64_t*, double*, int);
-template void float_to_int<double, uint64_t>(uint64_t*, double*, int);
-
-template void float_to_int<double, int>(int*, double*, int);
-
-template void float_to_int<long double, int8_t>(int8_t*, long double*, int);
-template void float_to_int<long double, uint8_t>(uint8_t*, long double*, int);
-template void float_to_int<long double, int16_t>(int16_t*, long double*, int);
-template void float_to_int<long double, uint16_t>(uint16_t*, long double*, int);
-template void float_to_int<long double, int32_t>(int32_t*, long double*, int);
-template void float_to_int<long double, uint32_t>(uint32_t*, long double*, int);
-template void float_to_int<long double, int64_t>(int64_t*, long double*, int);
-template void float_to_int<long double, uint64_t>(uint64_t*, long double*, int);
-
-template void float_to_int<long double, int>(int*, long double*, int);
-
-template std::vector<int8_t> float_to_int<float, int8_t>(std::vector<float>);
-template std::vector<uint8_t> float_to_int<float, uint8_t>(std::vector<float>);
-template std::vector<int16_t> float_to_int<float, int16_t>(std::vector<float>);
-template std::vector<uint16_t> float_to_int<float, uint16_t>(std::vector<float>);
-template std::vector<int32_t> float_to_int<float, int32_t>(std::vector<float>);
-template std::vector<uint32_t> float_to_int<float, uint32_t>(std::vector<float>);
-template std::vector<int64_t> float_to_int<float, int64_t>(std::vector<float>);
-template std::vector<uint64_t> float_to_int<float, uint64_t>(std::vector<float>);
-
-template std::vector<int> float_to_int<float, int>(std::vector<float>);
-
-template std::vector<int8_t> float_to_int<double, int8_t>(std::vector<double>);
-template std::vector<uint8_t> float_to_int<double, uint8_t>(std::vector<double>);
-template std::vector<int16_t> float_to_int<double, int16_t>(std::vector<double>);
-template std::vector<uint16_t> float_to_int<double, uint16_t>(std::vector<double>);
-template std::vector<int32_t> float_to_int<double, int32_t>(std::vector<double>);
-template std::vector<uint32_t> float_to_int<double, uint32_t>(std::vector<double>);
-template std::vector<int64_t> float_to_int<double, int64_t>(std::vector<double>);
-template std::vector<uint64_t> float_to_int<double, uint64_t>(std::vector<double>);
-
-template std::vector<int> float_to_int<double, int>(std::vector<double>);
-
-template std::vector<int8_t> float_to_int<long double, int8_t>(std::vector<long double>);
-template std::vector<uint8_t> float_to_int<long double, uint8_t>(std::vector<long double>);
-template std::vector<int16_t> float_to_int<long double, int16_t>(std::vector<long double>);
-template std::vector<uint16_t> float_to_int<long double, uint16_t>(std::vector<long double>);
-template std::vector<int32_t> float_to_int<long double, int32_t>(std::vector<long double>);
-template std::vector<uint32_t> float_to_int<long double, uint32_t>(std::vector<long double>);
-template std::vector<int64_t> float_to_int<long double, int64_t>(std::vector<long double>);
-template std::vector<uint64_t> float_to_int<long double, uint64_t>(std::vector<long double>);
-
-template std::vector<int> float_to_int<long double, int>(std::vector<long double>);
-
-template void float_to_int<float, int8_t>(std::vector<int8_t>*, std::vector<float>*);
-template void float_to_int<float, uint8_t>(std::vector<uint8_t>*, std::vector<float>*);
-template void float_to_int<float, int16_t>(std::vector<int16_t>*, std::vector<float>*);
-template void float_to_int<float, uint16_t>(std::vector<uint16_t>*, std::vector<float>*);
-template void float_to_int<float, int32_t>(std::vector<int32_t>*, std::vector<float>*);
-template void float_to_int<float, uint32_t>(std::vector<uint32_t>*, std::vector<float>*);
-template void float_to_int<float, int64_t>(std::vector<int64_t>*, std::vector<float>*);
-template void float_to_int<float, uint64_t>(std::vector<uint64_t>*, std::vector<float>*);
-
-template void float_to_int<float, int>(std::vector<int>*, std::vector<float>*);
-
-template void float_to_int<double, int8_t>(std::vector<int8_t>*, std::vector<double>*);
-template void float_to_int<double, uint8_t>(std::vector<uint8_t>*, std::vector<double>*);
-template void float_to_int<double, int16_t>(std::vector<int16_t>*, std::vector<double>*);
-template void float_to_int<double, uint16_t>(std::vector<uint16_t>*, std::vector<double>*);
-template void float_to_int<double, int32_t>(std::vector<int32_t>*, std::vector<double>*);
-template void float_to_int<double, uint32_t>(std::vector<uint32_t>*, std::vector<double>*);
-template void float_to_int<double, int64_t>(std::vector<int64_t>*, std::vector<double>*);
-template void float_to_int<double, uint64_t>(std::vector<uint64_t>*, std::vector<double>*);
-
-template void float_to_int<double, int>(std::vector<int>*, std::vector<double>*);
-
-template void float_to_int<long double, int8_t>(std::vector<int8_t>*, std::vector<long double>*);
-template void float_to_int<long double, uint8_t>(std::vector<uint8_t>*, std::vector<long double>*);
-template void float_to_int<long double, int16_t>(std::vector<int16_t>*, std::vector<long double>*);
-template void float_to_int<long double, uint16_t>(std::vector<uint16_t>*, std::vector<long double>*);
-template void float_to_int<long double, int32_t>(std::vector<int32_t>*, std::vector<long double>*);
-template void float_to_int<long double, uint32_t>(std::vector<uint32_t>*, std::vector<long double>*);
-template void float_to_int<long double, int64_t>(std::vector<int64_t>*, std::vector<long double>*);
-template void float_to_int<long double, uint64_t>(std::vector<uint64_t>*, std::vector<long double>*);
-
-template void float_to_int<long double, int>(std::vector<int>*, std::vector<long double>*);
-
-template void float_to_int<float, int8_t>(std::vector<int8_t>*, std::vector<float>*, int);
-template void float_to_int<float, uint8_t>(std::vector<uint8_t>*, std::vector<float>*, int);
-template void float_to_int<float, int16_t>(std::vector<int16_t>*, std::vector<float>*, int);
-template void float_to_int<float, uint16_t>(std::vector<uint16_t>*, std::vector<float>*, int);
-template void float_to_int<float, int32_t>(std::vector<int32_t>*, std::vector<float>*, int);
-template void float_to_int<float, uint32_t>(std::vector<uint32_t>*, std::vector<float>*, int);
-template void float_to_int<float, int64_t>(std::vector<int64_t>*, std::vector<float>*, int);
-template void float_to_int<float, uint64_t>(std::vector<uint64_t>*, std::vector<float>*, int);
-
-template void float_to_int<float, int>(std::vector<int>*, std::vector<float>*, int);
-
-template void float_to_int<double, int8_t>(std::vector<int8_t>*, std::vector<double>*, int);
-template void float_to_int<double, uint8_t>(std::vector<uint8_t>*, std::vector<double>*, int);
-template void float_to_int<double, int16_t>(std::vector<int16_t>*, std::vector<double>*, int);
-template void float_to_int<double, uint16_t>(std::vector<uint16_t>*, std::vector<double>*, int);
-template void float_to_int<double, int32_t>(std::vector<int32_t>*, std::vector<double>*, int);
-template void float_to_int<double, uint32_t>(std::vector<uint32_t>*, std::vector<double>*, int);
-template void float_to_int<double, int64_t>(std::vector<int64_t>*, std::vector<double>*, int);
-template void float_to_int<double, uint64_t>(std::vector<uint64_t>*, std::vector<double>*, int);
-
-template void float_to_int<double, int>(std::vector<int>*, std::vector<double>*, int);
-
-template void float_to_int<long double, int8_t>(std::vector<int8_t>*, std::vector<long double>*, int);
-template void float_to_int<long double, uint8_t>(std::vector<uint8_t>*, std::vector<long double>*, int);
-template void float_to_int<long double, int16_t>(std::vector<int16_t>*, std::vector<long double>*, int);
-template void float_to_int<long double, uint16_t>(std::vector<uint16_t>*, std::vector<long double>*, int);
-template void float_to_int<long double, int32_t>(std::vector<int32_t>*, std::vector<long double>*, int);
-template void float_to_int<long double, uint32_t>(std::vector<uint32_t>*, std::vector<long double>*, int);
-template void float_to_int<long double, int64_t>(std::vector<int64_t>*, std::vector<long double>*, int);
-template void float_to_int<long double, uint64_t>(std::vector<uint64_t>*, std::vector<long double>*, int);
-
-template void float_to_int<long double, int>(std::vector<int>*, std::vector<long double>*, int);
-
-template float int_to_float<int8_t, float>(int8_t);
-template float int_to_float<uint8_t, float>(uint8_t);
-template float int_to_float<int16_t, float>(int16_t);
-template float int_to_float<uint16_t, float>(uint16_t);
-template float int_to_float<int32_t, float>(int32_t);
-template float int_to_float<uint32_t, float>(uint32_t);
-template float int_to_float<int64_t, float>(int64_t);
-template float int_to_float<uint64_t, float>(uint64_t);
-
-template float int_to_float<int, float>(int);
-
-template double int_to_float<int8_t, double>(int8_t);
-template double int_to_float<uint8_t, double>(uint8_t);
-template double int_to_float<int16_t, double>(int16_t);
-template double int_to_float<uint16_t, double>(uint16_t);
-template double int_to_float<int32_t, double>(int32_t);
-template double int_to_float<uint32_t, double>(uint32_t);
-template double int_to_float<int64_t, double>(int64_t);
-template double int_to_float<uint64_t, double>(uint64_t);
-
-template double int_to_float<int, double>(int);
-
-template long double int_to_float<int8_t, long double>(int8_t);
-template long double int_to_float<uint8_t, long double>(uint8_t);
-template long double int_to_float<int16_t, long double>(int16_t);
-template long double int_to_float<uint16_t, long double>(uint16_t);
-template long double int_to_float<int32_t, long double>(int32_t);
-template long double int_to_float<uint32_t, long double>(uint32_t);
-template long double int_to_float<int64_t, long double>(int64_t);
-template long double int_to_float<uint64_t, long double>(uint64_t);
-
-template long double int_to_float<int, long double>(int);
-
-template void int_to_float<int8_t, float>(float*, int8_t*);
-template void int_to_float<uint8_t, float>(float*, uint8_t*);
-template void int_to_float<int16_t, float>(float*, int16_t*);
-template void int_to_float<uint16_t, float>(float*, uint16_t*);
-template void int_to_float<int32_t, float>(float*, int32_t*);
-template void int_to_float<uint32_t, float>(float*, uint32_t*);
-template void int_to_float<int64_t, float>(float*, int64_t*);
-template void int_to_float<uint64_t, float>(float*, uint64_t*);
-
-template void int_to_float<int, float>(float*, int*);
-
-template void int_to_float<int8_t, double>(double*, int8_t*);
-template void int_to_float<uint8_t, double>(double*, uint8_t*);
-template void int_to_float<int16_t, double>(double*, int16_t*);
-template void int_to_float<uint16_t, double>(double*, uint16_t*);
-template void int_to_float<int32_t, double>(double*, int32_t*);
-template void int_to_float<uint32_t, double>(double*, uint32_t*);
-template void int_to_float<int64_t, double>(double*, int64_t*);
-template void int_to_float<uint64_t, double>(double*, uint64_t*);
-
-template void int_to_float<int, double>(double*, int*);
-
-template void int_to_float<int8_t, long double>(long double*, int8_t*);
-template void int_to_float<uint8_t, long double>(long double*, uint8_t*);
-template void int_to_float<int16_t, long double>(long double*, int16_t*);
-template void int_to_float<uint16_t, long double>(long double*, uint16_t*);
-template void int_to_float<int32_t, long double>(long double*, int32_t*);
-template void int_to_float<uint32_t, long double>(long double*, uint32_t*);
-template void int_to_float<int64_t, long double>(long double*, int64_t*);
-template void int_to_float<uint64_t, long double>(long double*, uint64_t*);
-
-template void int_to_float<int, long double>(long double*, int*);
-
-template void int_to_float<int8_t, float>(float*, int8_t*, int);
-template void int_to_float<uint8_t, float>(float*, uint8_t*, int);
-template void int_to_float<int16_t, float>(float*, int16_t*, int);
-template void int_to_float<uint16_t, float>(float*, uint16_t*, int);
-template void int_to_float<int32_t, float>(float*, int32_t*, int);
-template void int_to_float<uint32_t, float>(float*, uint32_t*, int);
-template void int_to_float<int64_t, float>(float*, int64_t*, int);
-template void int_to_float<uint64_t, float>(float*, uint64_t*, int);
-
-template void int_to_float<int, float>(float*, int*, int);
-
-template void int_to_float<int8_t, double>(double*, int8_t*, int);
-template void int_to_float<uint8_t, double>(double*, uint8_t*, int);
-template void int_to_float<int16_t, double>(double*, int16_t*, int);
-template void int_to_float<uint16_t, double>(double*, uint16_t*, int);
-template void int_to_float<int32_t, double>(double*, int32_t*, int);
-template void int_to_float<uint32_t, double>(double*, uint32_t*, int);
-template void int_to_float<int64_t, double>(double*, int64_t*, int);
-template void int_to_float<uint64_t, double>(double*, uint64_t*, int);
-
-template void int_to_float<int, double>(double*, int*, int);
-
-template void int_to_float<int8_t, long double>(long double*, int8_t*, int);
-template void int_to_float<uint8_t, long double>(long double*, uint8_t*, int);
-template void int_to_float<int16_t, long double>(long double*, int16_t*, int);
-template void int_to_float<uint16_t, long double>(long double*, uint16_t*, int);
-template void int_to_float<int32_t, long double>(long double*, int32_t*, int);
-template void int_to_float<uint32_t, long double>(long double*, uint32_t*, int);
-template void int_to_float<int64_t, long double>(long double*, int64_t*, int);
-template void int_to_float<uint64_t, long double>(long double*, uint64_t*, int);
-
-template void int_to_float<int, long double>(long double*, int*, int);
-
-template std::vector<float> int_to_float<int8_t, float>(std::vector<int8_t>);
-template std::vector<float> int_to_float<uint8_t, float>(std::vector<uint8_t>);
-template std::vector<float> int_to_float<int16_t, float>(std::vector<int16_t>);
-template std::vector<float> int_to_float<uint16_t, float>(std::vector<uint16_t>);
-template std::vector<float> int_to_float<int32_t, float>(std::vector<int32_t>);
-template std::vector<float> int_to_float<uint32_t, float>(std::vector<uint32_t>);
-template std::vector<float> int_to_float<int64_t, float>(std::vector<int64_t>);
-template std::vector<float> int_to_float<uint64_t, float>(std::vector<uint64_t>);
-
-template std::vector<float> int_to_float<int, float>(std::vector<int>);
-
-template std::vector<double> int_to_float<int8_t, double>(std::vector<int8_t>);
-template std::vector<double> int_to_float<uint8_t, double>(std::vector<uint8_t>);
-template std::vector<double> int_to_float<int16_t, double>(std::vector<int16_t>);
-template std::vector<double> int_to_float<uint16_t, double>(std::vector<uint16_t>);
-template std::vector<double> int_to_float<int32_t, double>(std::vector<int32_t>);
-template std::vector<double> int_to_float<uint32_t, double>(std::vector<uint32_t>);
-template std::vector<double> int_to_float<int64_t, double>(std::vector<int64_t>);
-template std::vector<double> int_to_float<uint64_t, double>(std::vector<uint64_t>);
-
-template std::vector<double> int_to_float<int, double>(std::vector<int>);
-
-template std::vector<long double> int_to_float<int8_t, long double>(std::vector<int8_t>);
-template std::vector<long double> int_to_float<uint8_t, long double>(std::vector<uint8_t>);
-template std::vector<long double> int_to_float<int16_t, long double>(std::vector<int16_t>);
-template std::vector<long double> int_to_float<uint16_t, long double>(std::vector<uint16_t>);
-template std::vector<long double> int_to_float<int32_t, long double>(std::vector<int32_t>);
-template std::vector<long double> int_to_float<uint32_t, long double>(std::vector<uint32_t>);
-template std::vector<long double> int_to_float<int64_t, long double>(std::vector<int64_t>);
-template std::vector<long double> int_to_float<uint64_t, long double>(std::vector<uint64_t>);
-
-template std::vector<long double> int_to_float<int, long double>(std::vector<int>);
-
-template void int_to_float<int8_t, float>(std::vector<float>*, std::vector<int8_t>*);
-template void int_to_float<uint8_t, float>(std::vector<float>*, std::vector<uint8_t>*);
-template void int_to_float<int16_t, float>(std::vector<float>*, std::vector<int16_t>*);
-template void int_to_float<uint16_t, float>(std::vector<float>*, std::vector<uint16_t>*);
-template void int_to_float<int32_t, float>(std::vector<float>*, std::vector<int32_t>*);
-template void int_to_float<uint32_t, float>(std::vector<float>*, std::vector<uint32_t>*);
-template void int_to_float<int64_t, float>(std::vector<float>*, std::vector<int64_t>*);
-template void int_to_float<uint64_t, float>(std::vector<float>*, std::vector<uint64_t>*);
-
-template void int_to_float<int, float>(std::vector<float>*, std::vector<int>*);
-
-template void int_to_float<int8_t, double>(std::vector<double>*, std::vector<int8_t>*);
-template void int_to_float<uint8_t, double>(std::vector<double>*, std::vector<uint8_t>*);
-template void int_to_float<int16_t, double>(std::vector<double>*, std::vector<int16_t>*);
-template void int_to_float<uint16_t, double>(std::vector<double>*, std::vector<uint16_t>*);
-template void int_to_float<int32_t, double>(std::vector<double>*, std::vector<int32_t>*);
-template void int_to_float<uint32_t, double>(std::vector<double>*, std::vector<uint32_t>*);
-template void int_to_float<int64_t, double>(std::vector<double>*, std::vector<int64_t>*);
-template void int_to_float<uint64_t, double>(std::vector<double>*, std::vector<uint64_t>*);
-
-template void int_to_float<int, double>(std::vector<double>*, std::vector<int>*);
-
-template void int_to_float<int8_t, long double>(std::vector<long double>*, std::vector<int8_t>*);
-template void int_to_float<uint8_t, long double>(std::vector<long double>*, std::vector<uint8_t>*);
-template void int_to_float<int16_t, long double>(std::vector<long double>*, std::vector<int16_t>*);
-template void int_to_float<uint16_t, long double>(std::vector<long double>*, std::vector<uint16_t>*);
-template void int_to_float<int32_t, long double>(std::vector<long double>*, std::vector<int32_t>*);
-template void int_to_float<uint32_t, long double>(std::vector<long double>*, std::vector<uint32_t>*);
-template void int_to_float<int64_t, long double>(std::vector<long double>*, std::vector<int64_t>*);
-template void int_to_float<uint64_t, long double>(std::vector<long double>*, std::vector<uint64_t>*);
-
-template void int_to_float<int, long double>(std::vector<long double>*, std::vector<int>*);
-
-template void int_to_float<int8_t, float>(std::vector<float>*, std::vector<int8_t>*, int);
-template void int_to_float<uint8_t, float>(std::vector<float>*, std::vector<uint8_t>*, int);
-template void int_to_float<int16_t, float>(std::vector<float>*, std::vector<int16_t>*, int);
-template void int_to_float<uint16_t, float>(std::vector<float>*, std::vector<uint16_t>*, int);
-template void int_to_float<int32_t, float>(std::vector<float>*, std::vector<int32_t>*, int);
-template void int_to_float<uint32_t, float>(std::vector<float>*, std::vector<uint32_t>*, int);
-template void int_to_float<int64_t, float>(std::vector<float>*, std::vector<int64_t>*, int);
-template void int_to_float<uint64_t, float>(std::vector<float>*, std::vector<uint64_t>*, int);
-
-template void int_to_float<int, float>(std::vector<float>*, std::vector<int>*, int);
-
-template void int_to_float<int8_t, double>(std::vector<double>*, std::vector<int8_t>*, int);
-template void int_to_float<uint8_t, double>(std::vector<double>*, std::vector<uint8_t>*, int);
-template void int_to_float<int16_t, double>(std::vector<double>*, std::vector<int16_t>*, int);
-template void int_to_float<uint16_t, double>(std::vector<double>*, std::vector<uint16_t>*, int);
-template void int_to_float<int32_t, double>(std::vector<double>*, std::vector<int32_t>*, int);
-template void int_to_float<uint32_t, double>(std::vector<double>*, std::vector<uint32_t>*, int);
-template void int_to_float<int64_t, double>(std::vector<double>*, std::vector<int64_t>*, int);
-template void int_to_float<uint64_t, double>(std::vector<double>*, std::vector<uint64_t>*, int);
-
-template void int_to_float<int, double>(std::vector<double>*, std::vector<int>*, int);
-
-template void int_to_float<int8_t, long double>(std::vector<long double>*, std::vector<int8_t>*, int);
-template void int_to_float<uint8_t, long double>(std::vector<long double>*, std::vector<uint8_t>*, int);
-template void int_to_float<int16_t, long double>(std::vector<long double>*, std::vector<int16_t>*, int);
-template void int_to_float<uint16_t, long double>(std::vector<long double>*, std::vector<uint16_t>*, int);
-template void int_to_float<int32_t, long double>(std::vector<long double>*, std::vector<int32_t>*, int);
-template void int_to_float<uint32_t, long double>(std::vector<long double>*, std::vector<uint32_t>*, int);
-template void int_to_float<int64_t, long double>(std::vector<long double>*, std::vector<int64_t>*, int);
-template void int_to_float<uint64_t, long double>(std::vector<long double>*, std::vector<uint64_t>*, int);
-
-template void int_to_float<int, long double>(std::vector<long double>*, std::vector<int>*, int);
+// template int8_t float_to_int<float, int8_t>(float);
+// template uint8_t float_to_int<float, uint8_t>(float);
+// template int16_t float_to_int<float, int16_t>(float);
+// template uint16_t float_to_int<float, uint16_t>(float);
+// template int32_t float_to_int<float, int32_t>(float);
+// template uint32_t float_to_int<float, uint32_t>(float);
+// template int64_t float_to_int<float, int64_t>(float);
+// template uint64_t float_to_int<float, uint64_t>(float);
+
+// template int float_to_int<float, int>(float);
+
+// template int8_t float_to_int<double, int8_t>(double);
+// template uint8_t float_to_int<double, uint8_t>(double);
+// template int16_t float_to_int<double, int16_t>(double);
+// template uint16_t float_to_int<double, uint16_t>(double);
+// template int32_t float_to_int<double, int32_t>(double);
+// template uint32_t float_to_int<double, uint32_t>(double);
+// template int64_t float_to_int<double, int64_t>(double);
+// template uint64_t float_to_int<double, uint64_t>(double);
+
+// template int float_to_int<double, int>(double);
+
+// template int8_t float_to_int<long double, int8_t>(long double);
+// template uint8_t float_to_int<long double, uint8_t>(long double);
+// template int16_t float_to_int<long double, int16_t>(long double);
+// template uint16_t float_to_int<long double, uint16_t>(long double);
+// template int32_t float_to_int<long double, int32_t>(long double);
+// template uint32_t float_to_int<long double, uint32_t>(long double);
+// template int64_t float_to_int<long double, int64_t>(long double);
+// template uint64_t float_to_int<long double, uint64_t>(long double);
+
+// template int float_to_int<long double, int>(long double);
+
+// template void float_to_int<float, int8_t>(int8_t*, float*);
+// template void float_to_int<float, uint8_t>(uint8_t*, float*);
+// template void float_to_int<float, int16_t>(int16_t*, float*);
+// template void float_to_int<float, uint16_t>(uint16_t*, float*);
+// template void float_to_int<float, int32_t>(int32_t*, float*);
+// template void float_to_int<float, uint32_t>(uint32_t*, float*);
+// template void float_to_int<float, int64_t>(int64_t*, float*);
+// template void float_to_int<float, uint64_t>(uint64_t*, float*);
+
+// template void float_to_int<float, int>(int*, float*);
+
+// template void float_to_int<double, int8_t>(int8_t*, double*);
+// template void float_to_int<double, uint8_t>(uint8_t*, double*);
+// template void float_to_int<double, int16_t>(int16_t*, double*);
+// template void float_to_int<double, uint16_t>(uint16_t*, double*);
+// template void float_to_int<double, int32_t>(int32_t*, double*);
+// template void float_to_int<double, uint32_t>(uint32_t*, double*);
+// template void float_to_int<double, int64_t>(int64_t*, double*);
+// template void float_to_int<double, uint64_t>(uint64_t*, double*);
+
+// template void float_to_int<double, int>(int*, double*);
+
+// template void float_to_int<long double, int8_t>(int8_t*, long double*);
+// template void float_to_int<long double, uint8_t>(uint8_t*, long double*);
+// template void float_to_int<long double, int16_t>(int16_t*, long double*);
+// template void float_to_int<long double, uint16_t>(uint16_t*, long double*);
+// template void float_to_int<long double, int32_t>(int32_t*, long double*);
+// template void float_to_int<long double, uint32_t>(uint32_t*, long double*);
+// template void float_to_int<long double, int64_t>(int64_t*, long double*);
+// template void float_to_int<long double, uint64_t>(uint64_t*, long double*);
+
+// template void float_to_int<long double, int>(int*, long double*);
+
+// template void float_to_int<float, int8_t>(int8_t*, float*, int);
+// template void float_to_int<float, uint8_t>(uint8_t*, float*, int);
+// template void float_to_int<float, int16_t>(int16_t*, float*, int);
+// template void float_to_int<float, uint16_t>(uint16_t*, float*, int);
+// template void float_to_int<float, int32_t>(int32_t*, float*, int);
+// template void float_to_int<float, uint32_t>(uint32_t*, float*, int);
+// template void float_to_int<float, int64_t>(int64_t*, float*, int);
+// template void float_to_int<float, uint64_t>(uint64_t*, float*, int);
+
+// template void float_to_int<float, int>(int*, float*, int);
+
+// template void float_to_int<double, int8_t>(int8_t*, double*, int);
+// template void float_to_int<double, uint8_t>(uint8_t*, double*, int);
+// template void float_to_int<double, int16_t>(int16_t*, double*, int);
+// template void float_to_int<double, uint16_t>(uint16_t*, double*, int);
+// template void float_to_int<double, int32_t>(int32_t*, double*, int);
+// template void float_to_int<double, uint32_t>(uint32_t*, double*, int);
+// template void float_to_int<double, int64_t>(int64_t*, double*, int);
+// template void float_to_int<double, uint64_t>(uint64_t*, double*, int);
+
+// template void float_to_int<double, int>(int*, double*, int);
+
+// template void float_to_int<long double, int8_t>(int8_t*, long double*, int);
+// template void float_to_int<long double, uint8_t>(uint8_t*, long double*, int);
+// template void float_to_int<long double, int16_t>(int16_t*, long double*, int);
+// template void float_to_int<long double, uint16_t>(uint16_t*, long double*, int);
+// template void float_to_int<long double, int32_t>(int32_t*, long double*, int);
+// template void float_to_int<long double, uint32_t>(uint32_t*, long double*, int);
+// template void float_to_int<long double, int64_t>(int64_t*, long double*, int);
+// template void float_to_int<long double, uint64_t>(uint64_t*, long double*, int);
+
+// template void float_to_int<long double, int>(int*, long double*, int);
+
+// template std::vector<int8_t> float_to_int<float, int8_t>(std::vector<float>);
+// template std::vector<uint8_t> float_to_int<float, uint8_t>(std::vector<float>);
+// template std::vector<int16_t> float_to_int<float, int16_t>(std::vector<float>);
+// template std::vector<uint16_t> float_to_int<float, uint16_t>(std::vector<float>);
+// template std::vector<int32_t> float_to_int<float, int32_t>(std::vector<float>);
+// template std::vector<uint32_t> float_to_int<float, uint32_t>(std::vector<float>);
+// template std::vector<int64_t> float_to_int<float, int64_t>(std::vector<float>);
+// template std::vector<uint64_t> float_to_int<float, uint64_t>(std::vector<float>);
+
+// template std::vector<int> float_to_int<float, int>(std::vector<float>);
+
+// template std::vector<int8_t> float_to_int<double, int8_t>(std::vector<double>);
+// template std::vector<uint8_t> float_to_int<double, uint8_t>(std::vector<double>);
+// template std::vector<int16_t> float_to_int<double, int16_t>(std::vector<double>);
+// template std::vector<uint16_t> float_to_int<double, uint16_t>(std::vector<double>);
+// template std::vector<int32_t> float_to_int<double, int32_t>(std::vector<double>);
+// template std::vector<uint32_t> float_to_int<double, uint32_t>(std::vector<double>);
+// template std::vector<int64_t> float_to_int<double, int64_t>(std::vector<double>);
+// template std::vector<uint64_t> float_to_int<double, uint64_t>(std::vector<double>);
+
+// template std::vector<int> float_to_int<double, int>(std::vector<double>);
+
+// template std::vector<int8_t> float_to_int<long double, int8_t>(std::vector<long double>);
+// template std::vector<uint8_t> float_to_int<long double, uint8_t>(std::vector<long double>);
+// template std::vector<int16_t> float_to_int<long double, int16_t>(std::vector<long double>);
+// template std::vector<uint16_t> float_to_int<long double, uint16_t>(std::vector<long double>);
+// template std::vector<int32_t> float_to_int<long double, int32_t>(std::vector<long double>);
+// template std::vector<uint32_t> float_to_int<long double, uint32_t>(std::vector<long double>);
+// template std::vector<int64_t> float_to_int<long double, int64_t>(std::vector<long double>);
+// template std::vector<uint64_t> float_to_int<long double, uint64_t>(std::vector<long double>);
+
+// template std::vector<int> float_to_int<long double, int>(std::vector<long double>);
+
+// template void float_to_int<float, int8_t>(std::vector<int8_t>*, std::vector<float>*);
+// template void float_to_int<float, uint8_t>(std::vector<uint8_t>*, std::vector<float>*);
+// template void float_to_int<float, int16_t>(std::vector<int16_t>*, std::vector<float>*);
+// template void float_to_int<float, uint16_t>(std::vector<uint16_t>*, std::vector<float>*);
+// template void float_to_int<float, int32_t>(std::vector<int32_t>*, std::vector<float>*);
+// template void float_to_int<float, uint32_t>(std::vector<uint32_t>*, std::vector<float>*);
+// template void float_to_int<float, int64_t>(std::vector<int64_t>*, std::vector<float>*);
+// template void float_to_int<float, uint64_t>(std::vector<uint64_t>*, std::vector<float>*);
+
+// template void float_to_int<float, int>(std::vector<int>*, std::vector<float>*);
+
+// template void float_to_int<double, int8_t>(std::vector<int8_t>*, std::vector<double>*);
+// template void float_to_int<double, uint8_t>(std::vector<uint8_t>*, std::vector<double>*);
+// template void float_to_int<double, int16_t>(std::vector<int16_t>*, std::vector<double>*);
+// template void float_to_int<double, uint16_t>(std::vector<uint16_t>*, std::vector<double>*);
+// template void float_to_int<double, int32_t>(std::vector<int32_t>*, std::vector<double>*);
+// template void float_to_int<double, uint32_t>(std::vector<uint32_t>*, std::vector<double>*);
+// template void float_to_int<double, int64_t>(std::vector<int64_t>*, std::vector<double>*);
+// template void float_to_int<double, uint64_t>(std::vector<uint64_t>*, std::vector<double>*);
+
+// template void float_to_int<double, int>(std::vector<int>*, std::vector<double>*);
+
+// template void float_to_int<long double, int8_t>(std::vector<int8_t>*, std::vector<long double>*);
+// template void float_to_int<long double, uint8_t>(std::vector<uint8_t>*, std::vector<long double>*);
+// template void float_to_int<long double, int16_t>(std::vector<int16_t>*, std::vector<long double>*);
+// template void float_to_int<long double, uint16_t>(std::vector<uint16_t>*, std::vector<long double>*);
+// template void float_to_int<long double, int32_t>(std::vector<int32_t>*, std::vector<long double>*);
+// template void float_to_int<long double, uint32_t>(std::vector<uint32_t>*, std::vector<long double>*);
+// template void float_to_int<long double, int64_t>(std::vector<int64_t>*, std::vector<long double>*);
+// template void float_to_int<long double, uint64_t>(std::vector<uint64_t>*, std::vector<long double>*);
+
+// template void float_to_int<long double, int>(std::vector<int>*, std::vector<long double>*);
+
+// template void float_to_int<float, int8_t>(std::vector<int8_t>*, std::vector<float>*, int);
+// template void float_to_int<float, uint8_t>(std::vector<uint8_t>*, std::vector<float>*, int);
+// template void float_to_int<float, int16_t>(std::vector<int16_t>*, std::vector<float>*, int);
+// template void float_to_int<float, uint16_t>(std::vector<uint16_t>*, std::vector<float>*, int);
+// template void float_to_int<float, int32_t>(std::vector<int32_t>*, std::vector<float>*, int);
+// template void float_to_int<float, uint32_t>(std::vector<uint32_t>*, std::vector<float>*, int);
+// template void float_to_int<float, int64_t>(std::vector<int64_t>*, std::vector<float>*, int);
+// template void float_to_int<float, uint64_t>(std::vector<uint64_t>*, std::vector<float>*, int);
+
+// template void float_to_int<float, int>(std::vector<int>*, std::vector<float>*, int);
+
+// template void float_to_int<double, int8_t>(std::vector<int8_t>*, std::vector<double>*, int);
+// template void float_to_int<double, uint8_t>(std::vector<uint8_t>*, std::vector<double>*, int);
+// template void float_to_int<double, int16_t>(std::vector<int16_t>*, std::vector<double>*, int);
+// template void float_to_int<double, uint16_t>(std::vector<uint16_t>*, std::vector<double>*, int);
+// template void float_to_int<double, int32_t>(std::vector<int32_t>*, std::vector<double>*, int);
+// template void float_to_int<double, uint32_t>(std::vector<uint32_t>*, std::vector<double>*, int);
+// template void float_to_int<double, int64_t>(std::vector<int64_t>*, std::vector<double>*, int);
+// template void float_to_int<double, uint64_t>(std::vector<uint64_t>*, std::vector<double>*, int);
+
+// template void float_to_int<double, int>(std::vector<int>*, std::vector<double>*, int);
+
+// template void float_to_int<long double, int8_t>(std::vector<int8_t>*, std::vector<long double>*, int);
+// template void float_to_int<long double, uint8_t>(std::vector<uint8_t>*, std::vector<long double>*, int);
+// template void float_to_int<long double, int16_t>(std::vector<int16_t>*, std::vector<long double>*, int);
+// template void float_to_int<long double, uint16_t>(std::vector<uint16_t>*, std::vector<long double>*, int);
+// template void float_to_int<long double, int32_t>(std::vector<int32_t>*, std::vector<long double>*, int);
+// template void float_to_int<long double, uint32_t>(std::vector<uint32_t>*, std::vector<long double>*, int);
+// template void float_to_int<long double, int64_t>(std::vector<int64_t>*, std::vector<long double>*, int);
+// template void float_to_int<long double, uint64_t>(std::vector<uint64_t>*, std::vector<long double>*, int);
+
+// template void float_to_int<long double, int>(std::vector<int>*, std::vector<long double>*, int);
+
+// template float int_to_float<int8_t, float>(int8_t);
+// template float int_to_float<uint8_t, float>(uint8_t);
+// template float int_to_float<int16_t, float>(int16_t);
+// template float int_to_float<uint16_t, float>(uint16_t);
+// template float int_to_float<int32_t, float>(int32_t);
+// template float int_to_float<uint32_t, float>(uint32_t);
+// template float int_to_float<int64_t, float>(int64_t);
+// template float int_to_float<uint64_t, float>(uint64_t);
+
+// template float int_to_float<int, float>(int);
+
+// template double int_to_float<int8_t, double>(int8_t);
+// template double int_to_float<uint8_t, double>(uint8_t);
+// template double int_to_float<int16_t, double>(int16_t);
+// template double int_to_float<uint16_t, double>(uint16_t);
+// template double int_to_float<int32_t, double>(int32_t);
+// template double int_to_float<uint32_t, double>(uint32_t);
+// template double int_to_float<int64_t, double>(int64_t);
+// template double int_to_float<uint64_t, double>(uint64_t);
+
+// template double int_to_float<int, double>(int);
+
+// template long double int_to_float<int8_t, long double>(int8_t);
+// template long double int_to_float<uint8_t, long double>(uint8_t);
+// template long double int_to_float<int16_t, long double>(int16_t);
+// template long double int_to_float<uint16_t, long double>(uint16_t);
+// template long double int_to_float<int32_t, long double>(int32_t);
+// template long double int_to_float<uint32_t, long double>(uint32_t);
+// template long double int_to_float<int64_t, long double>(int64_t);
+// template long double int_to_float<uint64_t, long double>(uint64_t);
+
+// template long double int_to_float<int, long double>(int);
+
+// template void int_to_float<int8_t, float>(float*, int8_t*);
+// template void int_to_float<uint8_t, float>(float*, uint8_t*);
+// template void int_to_float<int16_t, float>(float*, int16_t*);
+// template void int_to_float<uint16_t, float>(float*, uint16_t*);
+// template void int_to_float<int32_t, float>(float*, int32_t*);
+// template void int_to_float<uint32_t, float>(float*, uint32_t*);
+// template void int_to_float<int64_t, float>(float*, int64_t*);
+// template void int_to_float<uint64_t, float>(float*, uint64_t*);
+
+// template void int_to_float<int, float>(float*, int*);
+
+// template void int_to_float<int8_t, double>(double*, int8_t*);
+// template void int_to_float<uint8_t, double>(double*, uint8_t*);
+// template void int_to_float<int16_t, double>(double*, int16_t*);
+// template void int_to_float<uint16_t, double>(double*, uint16_t*);
+// template void int_to_float<int32_t, double>(double*, int32_t*);
+// template void int_to_float<uint32_t, double>(double*, uint32_t*);
+// template void int_to_float<int64_t, double>(double*, int64_t*);
+// template void int_to_float<uint64_t, double>(double*, uint64_t*);
+
+// template void int_to_float<int, double>(double*, int*);
+
+// template void int_to_float<int8_t, long double>(long double*, int8_t*);
+// template void int_to_float<uint8_t, long double>(long double*, uint8_t*);
+// template void int_to_float<int16_t, long double>(long double*, int16_t*);
+// template void int_to_float<uint16_t, long double>(long double*, uint16_t*);
+// template void int_to_float<int32_t, long double>(long double*, int32_t*);
+// template void int_to_float<uint32_t, long double>(long double*, uint32_t*);
+// template void int_to_float<int64_t, long double>(long double*, int64_t*);
+// template void int_to_float<uint64_t, long double>(long double*, uint64_t*);
+
+// template void int_to_float<int, long double>(long double*, int*);
+
+// template void int_to_float<int8_t, float>(float*, int8_t*, int);
+// template void int_to_float<uint8_t, float>(float*, uint8_t*, int);
+// template void int_to_float<int16_t, float>(float*, int16_t*, int);
+// template void int_to_float<uint16_t, float>(float*, uint16_t*, int);
+// template void int_to_float<int32_t, float>(float*, int32_t*, int);
+// template void int_to_float<uint32_t, float>(float*, uint32_t*, int);
+// template void int_to_float<int64_t, float>(float*, int64_t*, int);
+// template void int_to_float<uint64_t, float>(float*, uint64_t*, int);
+
+// template void int_to_float<int, float>(float*, int*, int);
+
+// template void int_to_float<int8_t, double>(double*, int8_t*, int);
+// template void int_to_float<uint8_t, double>(double*, uint8_t*, int);
+// template void int_to_float<int16_t, double>(double*, int16_t*, int);
+// template void int_to_float<uint16_t, double>(double*, uint16_t*, int);
+// template void int_to_float<int32_t, double>(double*, int32_t*, int);
+// template void int_to_float<uint32_t, double>(double*, uint32_t*, int);
+// template void int_to_float<int64_t, double>(double*, int64_t*, int);
+// template void int_to_float<uint64_t, double>(double*, uint64_t*, int);
+
+// template void int_to_float<int, double>(double*, int*, int);
+
+// template void int_to_float<int8_t, long double>(long double*, int8_t*, int);
+// template void int_to_float<uint8_t, long double>(long double*, uint8_t*, int);
+// template void int_to_float<int16_t, long double>(long double*, int16_t*, int);
+// template void int_to_float<uint16_t, long double>(long double*, uint16_t*, int);
+// template void int_to_float<int32_t, long double>(long double*, int32_t*, int);
+// template void int_to_float<uint32_t, long double>(long double*, uint32_t*, int);
+// template void int_to_float<int64_t, long double>(long double*, int64_t*, int);
+// template void int_to_float<uint64_t, long double>(long double*, uint64_t*, int);
+
+// template void int_to_float<int, long double>(long double*, int*, int);
+
+// template std::vector<float> int_to_float<int8_t, float>(std::vector<int8_t>);
+// template std::vector<float> int_to_float<uint8_t, float>(std::vector<uint8_t>);
+// template std::vector<float> int_to_float<int16_t, float>(std::vector<int16_t>);
+// template std::vector<float> int_to_float<uint16_t, float>(std::vector<uint16_t>);
+// template std::vector<float> int_to_float<int32_t, float>(std::vector<int32_t>);
+// template std::vector<float> int_to_float<uint32_t, float>(std::vector<uint32_t>);
+// template std::vector<float> int_to_float<int64_t, float>(std::vector<int64_t>);
+// template std::vector<float> int_to_float<uint64_t, float>(std::vector<uint64_t>);
+
+// template std::vector<float> int_to_float<int, float>(std::vector<int>);
+
+// template std::vector<double> int_to_float<int8_t, double>(std::vector<int8_t>);
+// template std::vector<double> int_to_float<uint8_t, double>(std::vector<uint8_t>);
+// template std::vector<double> int_to_float<int16_t, double>(std::vector<int16_t>);
+// template std::vector<double> int_to_float<uint16_t, double>(std::vector<uint16_t>);
+// template std::vector<double> int_to_float<int32_t, double>(std::vector<int32_t>);
+// template std::vector<double> int_to_float<uint32_t, double>(std::vector<uint32_t>);
+// template std::vector<double> int_to_float<int64_t, double>(std::vector<int64_t>);
+// template std::vector<double> int_to_float<uint64_t, double>(std::vector<uint64_t>);
+
+// template std::vector<double> int_to_float<int, double>(std::vector<int>);
+
+// template std::vector<long double> int_to_float<int8_t, long double>(std::vector<int8_t>);
+// template std::vector<long double> int_to_float<uint8_t, long double>(std::vector<uint8_t>);
+// template std::vector<long double> int_to_float<int16_t, long double>(std::vector<int16_t>);
+// template std::vector<long double> int_to_float<uint16_t, long double>(std::vector<uint16_t>);
+// template std::vector<long double> int_to_float<int32_t, long double>(std::vector<int32_t>);
+// template std::vector<long double> int_to_float<uint32_t, long double>(std::vector<uint32_t>);
+// template std::vector<long double> int_to_float<int64_t, long double>(std::vector<int64_t>);
+// template std::vector<long double> int_to_float<uint64_t, long double>(std::vector<uint64_t>);
+
+// template std::vector<long double> int_to_float<int, long double>(std::vector<int>);
+
+// template void int_to_float<int8_t, float>(std::vector<float>*, std::vector<int8_t>*);
+// template void int_to_float<uint8_t, float>(std::vector<float>*, std::vector<uint8_t>*);
+// template void int_to_float<int16_t, float>(std::vector<float>*, std::vector<int16_t>*);
+// template void int_to_float<uint16_t, float>(std::vector<float>*, std::vector<uint16_t>*);
+// template void int_to_float<int32_t, float>(std::vector<float>*, std::vector<int32_t>*);
+// template void int_to_float<uint32_t, float>(std::vector<float>*, std::vector<uint32_t>*);
+// template void int_to_float<int64_t, float>(std::vector<float>*, std::vector<int64_t>*);
+// template void int_to_float<uint64_t, float>(std::vector<float>*, std::vector<uint64_t>*);
+
+// template void int_to_float<int, float>(std::vector<float>*, std::vector<int>*);
+
+// template void int_to_float<int8_t, double>(std::vector<double>*, std::vector<int8_t>*);
+// template void int_to_float<uint8_t, double>(std::vector<double>*, std::vector<uint8_t>*);
+// template void int_to_float<int16_t, double>(std::vector<double>*, std::vector<int16_t>*);
+// template void int_to_float<uint16_t, double>(std::vector<double>*, std::vector<uint16_t>*);
+// template void int_to_float<int32_t, double>(std::vector<double>*, std::vector<int32_t>*);
+// template void int_to_float<uint32_t, double>(std::vector<double>*, std::vector<uint32_t>*);
+// template void int_to_float<int64_t, double>(std::vector<double>*, std::vector<int64_t>*);
+// template void int_to_float<uint64_t, double>(std::vector<double>*, std::vector<uint64_t>*);
+
+// template void int_to_float<int, double>(std::vector<double>*, std::vector<int>*);
+
+// template void int_to_float<int8_t, long double>(std::vector<long double>*, std::vector<int8_t>*);
+// template void int_to_float<uint8_t, long double>(std::vector<long double>*, std::vector<uint8_t>*);
+// template void int_to_float<int16_t, long double>(std::vector<long double>*, std::vector<int16_t>*);
+// template void int_to_float<uint16_t, long double>(std::vector<long double>*, std::vector<uint16_t>*);
+// template void int_to_float<int32_t, long double>(std::vector<long double>*, std::vector<int32_t>*);
+// template void int_to_float<uint32_t, long double>(std::vector<long double>*, std::vector<uint32_t>*);
+// template void int_to_float<int64_t, long double>(std::vector<long double>*, std::vector<int64_t>*);
+// template void int_to_float<uint64_t, long double>(std::vector<long double>*, std::vector<uint64_t>*);
+
+// template void int_to_float<int, long double>(std::vector<long double>*, std::vector<int>*);
+
+// template void int_to_float<int8_t, float>(std::vector<float>*, std::vector<int8_t>*, int);
+// template void int_to_float<uint8_t, float>(std::vector<float>*, std::vector<uint8_t>*, int);
+// template void int_to_float<int16_t, float>(std::vector<float>*, std::vector<int16_t>*, int);
+// template void int_to_float<uint16_t, float>(std::vector<float>*, std::vector<uint16_t>*, int);
+// template void int_to_float<int32_t, float>(std::vector<float>*, std::vector<int32_t>*, int);
+// template void int_to_float<uint32_t, float>(std::vector<float>*, std::vector<uint32_t>*, int);
+// template void int_to_float<int64_t, float>(std::vector<float>*, std::vector<int64_t>*, int);
+// template void int_to_float<uint64_t, float>(std::vector<float>*, std::vector<uint64_t>*, int);
+
+// template void int_to_float<int, float>(std::vector<float>*, std::vector<int>*, int);
+
+// template void int_to_float<int8_t, double>(std::vector<double>*, std::vector<int8_t>*, int);
+// template void int_to_float<uint8_t, double>(std::vector<double>*, std::vector<uint8_t>*, int);
+// template void int_to_float<int16_t, double>(std::vector<double>*, std::vector<int16_t>*, int);
+// template void int_to_float<uint16_t, double>(std::vector<double>*, std::vector<uint16_t>*, int);
+// template void int_to_float<int32_t, double>(std::vector<double>*, std::vector<int32_t>*, int);
+// template void int_to_float<uint32_t, double>(std::vector<double>*, std::vector<uint32_t>*, int);
+// template void int_to_float<int64_t, double>(std::vector<double>*, std::vector<int64_t>*, int);
+// template void int_to_float<uint64_t, double>(std::vector<double>*, std::vector<uint64_t>*, int);
+
+// template void int_to_float<int, double>(std::vector<double>*, std::vector<int>*, int);
+
+// template void int_to_float<int8_t, long double>(std::vector<long double>*, std::vector<int8_t>*, int);
+// template void int_to_float<uint8_t, long double>(std::vector<long double>*, std::vector<uint8_t>*, int);
+// template void int_to_float<int16_t, long double>(std::vector<long double>*, std::vector<int16_t>*, int);
+// template void int_to_float<uint16_t, long double>(std::vector<long double>*, std::vector<uint16_t>*, int);
+// template void int_to_float<int32_t, long double>(std::vector<long double>*, std::vector<int32_t>*, int);
+// template void int_to_float<uint32_t, long double>(std::vector<long double>*, std::vector<uint32_t>*, int);
+// template void int_to_float<int64_t, long double>(std::vector<long double>*, std::vector<int64_t>*, int);
+// template void int_to_float<uint64_t, long double>(std::vector<long double>*, std::vector<uint64_t>*, int);
+
+// template void int_to_float<int, long double>(std::vector<long double>*, std::vector<int>*, int);
 
 #endif

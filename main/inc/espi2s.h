@@ -44,7 +44,7 @@ public:
     Bus(const Bus& obj);
     ~Bus();
     
-    virtual void set_buffer_length(int length);
+    virtual void set_buffer_length(int length, int count);
     virtual void set_bit_depth(uint16_t bitsPerSample);
     virtual void set_sample_rate(uint32_t samplerate);
     virtual void set_channels(uint16_t channels);

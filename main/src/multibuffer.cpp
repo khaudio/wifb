@@ -578,12 +578,12 @@ AtomicMultiRingBuffer<T>::~AtomicMultiRingBuffer()
 
 /*                    Atomic Indices Ring Buffer                    */
 
-template class Buffer::AtomicMultiRingBuffer<int8_t>;
+// template class Buffer::AtomicMultiRingBuffer<int8_t>;
 template class Buffer::AtomicMultiRingBuffer<uint8_t>;
 template class Buffer::AtomicMultiRingBuffer<int16_t>;
-template class Buffer::AtomicMultiRingBuffer<uint16_t>;
+// template class Buffer::AtomicMultiRingBuffer<uint16_t>;
 template class Buffer::AtomicMultiRingBuffer<int32_t>;
-template class Buffer::AtomicMultiRingBuffer<uint32_t>;
+// template class Buffer::AtomicMultiRingBuffer<uint32_t>;
 
 template class Buffer::AtomicMultiRingBuffer<int>;
 

@@ -10,7 +10,7 @@ _numBytesRead(0),
 _numTicksToWait(100)
 {
     this->_channelConfig = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
-    this->_channelConfig.dma_desc_num = 6;
+    this->_channelConfig.dma_desc_num = 4;
     this->_channelConfig.dma_frame_num = 384;
     i2s_new_channel(&(this->_channelConfig), &(this->_txHandle), &(this->_rxHandle));
     this->_stdConfig.clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(48000);
@@ -60,7 +60,7 @@ void Bus::_enable()
     i2s_channel_enable(this->_rxHandle);
 }
 
-void Bus::set_buffer_length(int length)
+void Bus::set_buffer_length(int length, int count)
 {
     /* Sets DMA buffer length */
     #ifdef _DEBUG
@@ -71,6 +71,7 @@ void Bus::set_buffer_length(int length)
     #endif
 
     this->_channelConfig.dma_frame_num = length;
+    this->_channelConfig.dma_desc_num = count;
 }
 
 void Bus::set_bit_depth(uint16_t bitsPerSample)
