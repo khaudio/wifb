@@ -31,17 +31,18 @@ target_compile_options(${COMPONENT_LIB}
         -Wshadow-compatible-local
         -Wno-error
         -Wno-error=sequence-point
-        $<$<CONFIG:Debug>:-O0 -g -Wall>
-        $<$<CONFIG:Release>:-O2>
 )
 
 target_compile_definitions(${COMPONENT_LIB}
     PRIVATE
-        CONFIG_MODE_TRANSMIT=1
-        RINGBUFF_AUTO_FIRST_ROTATE=1
         _DEBUG=0
-        $<$<CONFIG:Debug>:DEBUG_BUILD;_DEBUG;>
-        $<$<CONFIG:Release>:>
+        CONFIG_MODE_TRANSMIT=1
+        NUM_CHANNELS=1
+        SAMPLE_RATE=48000
+        BITS_PER_SAMPLE=16
+        RING_BUFFER_LENGTH=128
+        RING_LENGTH=4
+        RINGBUFF_AUTO_FIRST_ROTATE=1
 )
 
 target_include_directories(${COMPONENT_LIB}

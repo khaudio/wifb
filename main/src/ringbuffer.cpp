@@ -554,6 +554,18 @@ void RingBuffer<T, I>::set_size(int_fast32_t bufferSize, int_fast8_t ringSize)
 template <typename T, typename I>
 void RingBuffer<T, I>::fill(T value)
 {
+    // for (int_fast32_t i(1); i < this->_ringLength; ++i)
+    // {
+    //     for (int_fast32_t j(0); j < this->_bufferLength; ++j)
+    //     {
+    //         #if _DEBUG
+    //         this->ring.at(i).at(j) = value;
+    //         #else
+    //         this->ring[i][j] = value;
+    //         #endif
+    //     }
+    // }
+
     for (int_fast32_t i(0); i < this->_bufferLength; ++i)
     {
         #if _DEBUG
@@ -1077,30 +1089,34 @@ std::vector<T> AtomicMultiReadRingBuffer<T>::read()
 /*                               Base                               */
 
 // template class Buffer::Base<int8_t, int_fast8_t>;
-template class Buffer::Base<uint8_t, int_fast8_t>;
-template class Buffer::Base<int16_t, int_fast8_t>;
+// template class Buffer::Base<uint8_t, int_fast8_t>;
+// template class Buffer::Base<int16_t, int_fast8_t>;
 // template class Buffer::Base<uint16_t, int_fast8_t>;
-template class Buffer::Base<int32_t, int_fast8_t>;
+// template class Buffer::Base<int32_t, int_fast8_t>;
 // template class Buffer::Base<uint32_t, int_fast8_t>;
 
-template class Buffer::Base<int, int_fast8_t>;
+template class Buffer::Base<uint8_t, int_fast8_t>;
+template class Buffer::Base<int16_t, int_fast8_t>;
+template class Buffer::Base<int_fast32_t, int_fast8_t>;
 
-template class Buffer::Base<float, int_fast8_t>;
-template class Buffer::Base<double, int_fast8_t>;
+// template class Buffer::Base<float, int_fast8_t>;
+// template class Buffer::Base<double, int_fast8_t>;
 
 /*                       Atomic Indices Base                        */
 
 // template class Buffer::Base<int8_t, std::atomic_int_fast8_t>;
-template class Buffer::Base<uint8_t, std::atomic_int_fast8_t>;
-template class Buffer::Base<int16_t, std::atomic_int_fast8_t>;
+// template class Buffer::Base<uint8_t, std::atomic_int_fast8_t>;
+// template class Buffer::Base<int16_t, std::atomic_int_fast8_t>;
 // template class Buffer::Base<uint16_t, std::atomic_int_fast8_t>;
-template class Buffer::Base<int32_t, std::atomic_int_fast8_t>;
+// template class Buffer::Base<int32_t, std::atomic_int_fast8_t>;
 // template class Buffer::Base<uint32_t, std::atomic_int_fast8_t>;
 
-template class Buffer::Base<int, std::atomic_int_fast8_t>;
+template class Buffer::Base<uint8_t, std::atomic_int_fast8_t>;
+template class Buffer::Base<int16_t, std::atomic_int_fast8_t>;
+template class Buffer::Base<int_fast32_t, std::atomic_int_fast8_t>;
 
-template class Buffer::Base<float, std::atomic_int_fast8_t>;
-template class Buffer::Base<double, std::atomic_int_fast8_t>;
+// template class Buffer::Base<float, std::atomic_int_fast8_t>;
+// template class Buffer::Base<double, std::atomic_int_fast8_t>;
 
 /*                           Ring Buffer                            */
 
@@ -1161,13 +1177,15 @@ template class Buffer::Base<double, std::atomic_int_fast8_t>;
 /*           Atomic Indices Multi Read Counter Ring Buffer          */
 
 // template class Buffer::AtomicMultiReadRingBuffer<int8_t>;
-template class Buffer::AtomicMultiReadRingBuffer<uint8_t>;
-template class Buffer::AtomicMultiReadRingBuffer<int16_t>;
+// template class Buffer::AtomicMultiReadRingBuffer<uint8_t>;
+// template class Buffer::AtomicMultiReadRingBuffer<int16_t>;
 // template class Buffer::AtomicMultiReadRingBuffer<uint16_t>;
-template class Buffer::AtomicMultiReadRingBuffer<int32_t>;
+// template class Buffer::AtomicMultiReadRingBuffer<int32_t>;
 // template class Buffer::AtomicMultiReadRingBuffer<uint32_t>;
 
-template class Buffer::AtomicMultiReadRingBuffer<int>;
+template class Buffer::AtomicMultiReadRingBuffer<uint8_t>;
+template class Buffer::AtomicMultiReadRingBuffer<int16_t>;
+template class Buffer::AtomicMultiReadRingBuffer<int_fast32_t>;
 
-template class Buffer::AtomicMultiReadRingBuffer<float>;
-template class Buffer::AtomicMultiReadRingBuffer<double>;
+// template class Buffer::AtomicMultiReadRingBuffer<float>;
+// template class Buffer::AtomicMultiReadRingBuffer<double>;

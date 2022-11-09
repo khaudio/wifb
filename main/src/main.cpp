@@ -4,7 +4,12 @@
  */
 
 /** TODO:
+ *      tcp socket for mac and metadata
+ *      udp socket for audio data
+ * 
  *      server
+ *          launch client_handler in thread at boot?
+ *              put client in queue to handler when connected
  *          timecode generator/transmitter
  *              different network socket or interleave
  *              to either channel
@@ -16,8 +21,6 @@
  *                  read LTC input
  * 
  *      client
- *          check socket connect return codes
- *              < 0 vs >= 0
  *          receive timecode
  *              LTC output
  */
@@ -33,7 +36,9 @@
 #include "esp32button.h"
 #include "espi2s.h"
 #include "wifbnetwork.h"
-#include "ltcstaticwavetables.h"
+// #include "ltcstaticwavetables.h"
+
+// #include "oscillator.h"
 
 
 /*                              Macros                              */
@@ -59,22 +64,38 @@
 /* Momentary switch */
 #define BUTTON_PIN                  (GPIO_NUM_35)
 
-/* 48 KHz sample rate */
+/* Audio sample rate */
 #ifndef SAMPLE_RATE
 #define SAMPLE_RATE                 48000
 #endif
 
-/* 32-bit int datatype for audio I/O */
+/* Bit depth for audio I/O */
 #ifndef BITS_PER_SAMPLE
-#define BITS_PER_SAMPLE             32
+#define BITS_PER_SAMPLE             16
+#endif
+
+/* Mono or stereo */
+#ifndef NUM_CHANNELS
+#define NUM_CHANNELS                1
 #endif
 
 /* Sample width in bytes */
-#define SAMPLE_WIDTH                ((BITS_PER_SAMPLE) / 8) // 4 bytes
+#define SAMPLE_WIDTH                ((BITS_PER_SAMPLE) / 8)
+
+/* Audio data type depends on bit depth */
+#if ((BITS_PER_SAMPLE) == 8)
+#define AUDIO_DATATYPE              uint8_t
+#elif ((BITS_PER_SAMPLE) == 16)
+#define AUDIO_DATATYPE              int16_t
+#elif ((BITS_PER_SAMPLE) == 24)
+#define AUDIO_DATATYPE              int_fast32_t
+#elif ((BITS_PER_SAMPLE) == 32)
+#define AUDIO_DATATYPE              int_fast32_t
+#endif
 
 /* Length in samples of each buffer in ring */
 #ifndef RING_BUFFER_LENGTH
-#define RING_BUFFER_LENGTH          512
+#define RING_BUFFER_LENGTH          128
 #endif
 
 /* Number of buffers in ring buffer */
@@ -82,12 +103,20 @@
 #define RING_LENGTH                 2
 #endif
 
-/* Ring buffer size in bytes */
-#define RING_BUFFER_SIZE            ((RING_BUFFER_LENGTH) * (SAMPLE_WIDTH)) // 2048 bytes
+/* Size in bytes of each buffer in ring */
+#define RING_BUFFER_SIZE            ((RING_BUFFER_LENGTH) * (SAMPLE_WIDTH))
 
 /* Size in bytes of each transmission via socket */
 #ifndef TRANSMIT_CHUNKSIZE
-#define TRANSMIT_CHUNKSIZE          ((RING_BUFFER_SIZE) / 16) // 128 bytes
+#if ((RING_BUFFER_SIZE) >= 1024)
+#define TRANSMIT_CHUNKSIZE          ((RING_BUFFER_SIZE) / 16)
+#elif ((RING_BUFFER_SIZE) >= 512)
+#define TRANSMIT_CHUNKSIZE          ((RING_BUFFER_SIZE) / 8)
+#elif ((RING_BUFFER_SIZE) >= 256)
+#define TRANSMIT_CHUNKSIZE          ((RING_BUFFER_SIZE) / 4)
+#else
+#define TRANSMIT_CHUNKSIZE          (RING_BUFFER_SIZE)
+#endif
 #endif
 
 /* Whether this unit is in transmit mode */
@@ -104,7 +133,7 @@ static bool txMode(CONFIG_MODE_TRANSMIT);
 static int numSamplesOffset(0);
 
 /* Audio I/O */
-static Buffer::AtomicMultiReadRingBuffer<int_fast32_t> ringBuffer(
+static Buffer::AtomicMultiReadRingBuffer<AUDIO_DATATYPE> ringBuffer(
         RING_BUFFER_LENGTH,
         RING_LENGTH
     );
@@ -113,9 +142,7 @@ static I2S::Bus i2s;
 /* Hardware button */
 static Esp32Button::DualActionButton button(BUTTON_PIN);
 
-WIFBClient self;
-// static uint8_t selfMacAddr[6];
-
+static WIFBClient self;
 static std::vector<std::shared_ptr<WIFBClient>> connectedClients;
 static int retryNum = 0;
 static EventGroupHandle_t staEventGroup;
@@ -125,7 +152,13 @@ static EventGroupHandle_t staEventGroup;
 /* Audio */
 
 void i2s_to_ring_buffer(void);
+void i2s_to_buffer_loop(void);
 void ring_buffer_to_i2s(void);
+void buffer_to_i2s_loop(void);
+// void osc_to_ring_buffer(void);
+// void osc_to_buffer_loop(void);
+
+// Osc::OscillatorBase<float> osc;
 
 /* Networking */
 
@@ -141,7 +174,8 @@ void ap_event_handler(
     );
 int config_ap(void);
 void purge_disconnected_clients(void);
-void socket_server(void);
+void socket_server_tcp(void);
+void socket_server_udp(void);
 void client_sock_handler(std::shared_ptr<WIFBClient> client);
 
 /* Receiver */
@@ -165,13 +199,13 @@ extern "C" void app_main(void);
 
 void i2s_to_ring_buffer(void)
 {
-    DEBUG_OUT("Getting available samples...\n");
+    // DEBUG_OUT("Getting available samples...\n");
 
     /* Read from i2s input to ring buffer */
     const int unwritten(ringBuffer.unwritten());
 
-    DEBUG_OUT(+unwritten << " unwritten samples");
-    DEBUG_OUT(" available to write to ring buffer\n");
+    // DEBUG_OUT(+unwritten << " unwritten samples");
+    // DEBUG_OUT(" available to write to ring buffer\n");
 
     if (!unwritten) return;
 
@@ -195,6 +229,18 @@ void i2s_to_ring_buffer(void)
     ringBuffer.report_written_samples(unwritten);
 }
 
+void i2s_to_buffer_loop(void)
+{
+    DEBUG_OUT("Running i2s_to_buffer_loop...\n");
+    int delayCounter(0);
+    while (true)
+    {
+        i2s_to_ring_buffer();
+        delay_ticks_count(&delayCounter, 125, 1);
+    }
+    DEBUG_ERR("i2s_to_buffer_loop exited unexpectedly\n");
+}
+
 void ring_buffer_to_i2s(void)
 {
     /* Write from ring buffer to i2s output */
@@ -212,6 +258,42 @@ void ring_buffer_to_i2s(void)
     i2s.write(ringBuffer.get_read_buffer(), unread);
     ringBuffer.report_read_samples(unread);
 }
+
+void buffer_to_i2s_loop(void)
+{
+    DEBUG_OUT("Running buffer_to_i2s_loop...\n");
+    int delayCounter(0);
+    while (true)
+    {
+        ring_buffer_to_i2s();
+        delay_ticks_count(&delayCounter, 125, 1);
+    }
+    DEBUG_ERR("buffer_to_i2s_loop exited unexpectedly\n");
+}
+
+// void osc_to_ring_buffer(void)
+// {
+//     /* Read from i2s input to ring buffer */
+//     const int unwritten(ringBuffer.unwritten());
+
+//     if (!unwritten) return;
+
+//     osc.get_int<AUDIO_DATATYPE>(
+//             ringBuffer.get_write_sample(),
+//             unwritten
+//         );
+//     ringBuffer.report_written_samples(unwritten);
+// }
+
+// void osc_to_buffer_loop(void)
+// {
+//     int delayCounter(0);
+//     while (true)
+//     {
+//         osc_to_ring_buffer();
+//         delay_ticks_count(&delayCounter, 125, 1);
+//     }
+// }
 
 /* Networking */
 
@@ -254,6 +336,7 @@ void ap_event_handler(
         if (client != nullptr)
         {
             client->socketConnected = false;
+            client->networkConnected = false;
             client->sock = 0;
 
             DEBUG_OUT("Disconnected client:\n");
@@ -362,9 +445,9 @@ void purge_disconnected_clients()
     #endif
 }
 
-void socket_server(void)
+void socket_server_tcp(void)
 {
-    DEBUG_OUT("Starting socket server\n");
+    DEBUG_OUT("Starting tcp socket server\n");
 
     struct sockaddr_in serverAddress, clientAddress;
     
@@ -405,11 +488,13 @@ void socket_server(void)
     uint8_t incomingMacAddr[6];
     socklen_t clientAddressLength;
     int clientSock;
-    bool newClient;
     std::shared_ptr<WIFBClient> client;
 
-    while (1)
+    while (true)
     {
+        DEBUG_OUT("Listening for new connections...\n");
+        DEBUG_OUT("Accepting connection from client...\n");
+
         // Listen for a new client connection.
         clientAddressLength = sizeof(clientAddress);
         clientSock = accept(sock, (struct sockaddr*)&clientAddress, &clientAddressLength);
@@ -424,8 +509,7 @@ void socket_server(void)
         
         // Check if client is reconnecting or new
         client = get_client_from_mac(incomingMacAddr);
-        newClient = (client == nullptr);
-        if (newClient)
+        if (client == nullptr)
         {
             // Create new client
             DEBUG_OUT("New client found:\n");
@@ -453,22 +537,117 @@ void socket_server(void)
         }
 
         // Update client status in index
-        client->sock = clientSock;
+        client->networkConnected = true;
         client->socketConnected = true;
+        client->sock = clientSock;
 
         DEBUG_OUT("\t  ip: " << ip_addr_string(client->ip) << '\n');
         DEBUG_OUT("\t mac: " << mac_addr_string(client->mac) << '\n');
         DEBUG_OUT("\tsock: " << client->sock << '\n');
 
         // Launch handler for individual client
-        // client_sock_handler(client);
-        std::async(std::launch::async, &client_sock_handler, client);
+        client_sock_handler(client);
+        // std::thread t(client_sock_handler, client);
 
         DEBUG_OUT("Client handler launched\n");
         
-        delay_ticks_count(&delayCounter, 100, 1);
+        DEBUG_OUT("Incrementing delay counter...\n")
+        delay_ticks_count(&delayCounter, 125, 1);
+        DEBUG_OUT("Delay counter incremented\n")
     }
+    DEBUG_ERR("Exiting socket_server_tcp\n");
 }
+
+
+
+void socket_server_udp(void)
+{
+    // int rc;
+    // DEBUG_OUT("Starting udp socket server\n");
+
+    // struct sockaddr_in serverAddress, clientAddress;
+    
+    // DEBUG_OUT("Creating socket...\n");
+
+    // // Create a socket that we will listen upon.
+    // self.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+    // if (self.sock < 0)
+    // {
+    //     DEBUG_ERR("socket: " << self.sock << errno << '\n');
+    //     return;
+    // }
+
+    // int enable = 1;
+    // lwip_setsockopt(self.sock, IPPROTO_IP, IP_PKTINFO, &enable, sizeof(enable));
+
+    // // Set timeout
+    // struct timeval timeout;
+    // timeout.tv_sec = 10;
+    // timeout.tv_usec = 0;
+    // setsockopt(self.sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+    // DEBUG_OUT("Binding socket to port...\n");
+
+    // // Bind our server socket to a port
+    // serverAddress.sin_family = AF_INET;
+    // serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+    // serverAddress.sin_port = htons(CONFIG_PORT);
+
+    // rc = bind(
+    //         self.sock,
+    //         reinterpret_cast<sockaddr*>(&serverAddress),
+    //         sizeof(serverAddress)
+    //     );
+    // if (rc < 0)
+    // {
+    //     DEBUG_ERR("bind err; rc: " << rc << '\n');
+    //     return;
+    // }
+
+    // struct sockaddr_storage source_addr;
+    // socklen_t socklen = sizeof(source_addr);
+
+    // struct iovec iov;
+    // struct msghdr msg;
+    // struct cmsghdr* cmsgtmp;
+    // uint8_t cmsg_buf[CMSG_SPACE(sizeof(struct in_pktinfo))];
+
+    // iov.iov_base = rx_buffer;
+    // iov.iov_len = sizeof(rx_buffer);
+    // msg.msg_control = cmsg_buf;
+    // msg.msg_controllen = sizeof(cmsg_buf);
+    // msg.msg_flags = 0;
+    // msg.msg_iov = &iov;
+    // msg.msg_iovlen = 1;
+    // msg.msg_name = reinterpret_cast<sockaddr*>(&source_addr);
+    // msg.msg_namelen = socklen;
+
+    // while (true)
+    // {
+    //     DEBUG_OUT("Waiting for data...\n");
+    //     int len = recvmsg(self.sock, &msg, 0);
+
+    //     if (len < 0)
+    //     {
+    //         DEBUG_ERR("Error receiving data\n");
+    //         break;
+    //     }
+    //     else
+    //     {
+    //         DEBUG_OUT("Data received of length " << length << '\n');
+    //     }
+
+    //     DEBUG_OUT("Incrementing delay counter...\n")
+    //     delay_ticks_count(&delayCounter, 125, 1);
+    //     DEBUG_OUT("Delay counter incremented\n")
+    // }
+
+    // DEBUG_ERR("Exiting socket_server_udp\n");
+}
+
+
+
+
 
 void client_sock_handler(std::shared_ptr<WIFBClient> client)
 {
@@ -495,10 +674,6 @@ void client_sock_handler(std::shared_ptr<WIFBClient> client)
 
     while (client->socketConnected)
     {
-        DEBUG_OUT("Buffering i2s to ring buffer\n");
-
-        i2s_to_ring_buffer();
-
         DEBUG_OUT(ringBuffer.buffered() << " samples buffered");
         DEBUG_OUT(" of total ring sample length of ");
         DEBUG_OUT(ringBuffer.size() << '\n');
@@ -522,7 +697,7 @@ void client_sock_handler(std::shared_ptr<WIFBClient> client)
 
         DEBUG_OUT("Incrementing delay counter\n");
 
-        delay_ticks_count(&delayCounter, 100, 1);
+        delay_ticks_count(&delayCounter, 125, 1);
 
         DEBUG_OUT("Cycling...\n");
     }
@@ -591,6 +766,11 @@ void sta_event_handler(
 
         retryNum = 0;
         xEventGroupSetBits(staEventGroup, WIFI_CONNECTED_BIT);
+    }
+    else
+    {
+        DEBUG_ERR("An unknown event occured:\n");
+        DEBUG_ERR("\teventBase == " << eventBase << '\n');
     }
 }
 
@@ -692,9 +872,9 @@ int config_sta(void)
     return rc;
 }
 
-void socket_client(void)
+void socket_client_tcp(void)
 {
-    DEBUG_OUT("Starting socket client...\n");
+    DEBUG_OUT("Starting socket_client_tcp...\n");
     DEBUG_OUT("Creating socket...\n");
 
     int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -709,49 +889,125 @@ void socket_client(void)
 
     DEBUG_OUT("Connecting to server...\n");
     int rc = connect(
-            sock,
+            self.sock,
             (struct sockaddr*)&serverAddress,
             sizeof(struct sockaddr_in)
         );
     DEBUG_OUT("connect rc: " << rc << '\n');
 
-    self.socketConnected = (rc >= 0);
-
-    send(sock, self.mac, 6, 0);
-    DEBUG_OUT("Send self mac addr: " << mac_addr_string(self.mac) << '\n');
+    if (self.socketConnected = (rc >= 0))
+    {
+        send(self.sock, self.mac, 6, 0);
+        DEBUG_OUT("Send self mac addr: " << mac_addr_string(self.mac) << '\n');
+    }
 
     int delayCounter(0);
-    
-    // ringBuffer.rotate_write_index();
 
     while (self.socketConnected)
     {
-        ring_buffer_to_i2s();
         if (ringBuffer.available() >= (TRANSMIT_CHUNKSIZE))
         {
             rc = recv(
-                    sock,
+                    self.sock,
                     ringBuffer.get_write_byte(),
                     (TRANSMIT_CHUNKSIZE),
                     0
                 );
+            if (rc < 0)
+            {
+                DEBUG_ERR("recv rc == " << rc << '\n');
+                self.socketConnected = false;
+                break;
+            }
 
             ringBuffer.report_written_bytes(TRANSMIT_CHUNKSIZE);
         }
-        delay_ticks_count(&delayCounter, 100, 1);
+        delay_ticks_count(&delayCounter, 125, 1);
     }
-    
+
     DEBUG_OUT("Closing socket...\n");
 
-    rc = close(sock);
-
-    /* Flush buffer */
-
-    ringBuffer.fill(0);
+    rc = close(self.sock);
 
     DEBUG_OUT("close rc: " << rc << '\n');
     DEBUG_OUT("Socket closed\n");
+
+    DEBUG_OUT("Exiting socket_client_tcp\n");
 }
+
+
+
+
+
+
+void socket_client_udp(void)
+{
+    // DEBUG_OUT("Starting socket_client_udp...\n");
+    // DEBUG_OUT("Creating socket...\n");
+
+    // int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+    // self.sock = sock;
+
+    // DEBUG_OUT("socket rc: " << self.sock << '\n');
+
+    // struct sockaddr_in serverAddress;
+    // serverAddress.sin_family = AF_INET;
+    // inet_pton(AF_INET, "192.168.4.1", &serverAddress.sin_addr.s_addr);
+    // serverAddress.sin_port = htons(CONFIG_PORT);
+
+    // DEBUG_OUT("Connecting to server...\n");
+    // int rc = connect(
+    //         self.sock,
+    //         (struct sockaddr*)&serverAddress,
+    //         sizeof(struct sockaddr_in)
+    //     );
+    // DEBUG_OUT("connect rc: " << rc << '\n');
+
+    // if (self.socketConnected = (rc >= 0))
+    // {
+    //     send(self.sock, self.mac, 6, 0);
+    //     DEBUG_OUT("Send self mac addr: " << mac_addr_string(self.mac) << '\n');
+    // }
+
+    // int delayCounter(0);
+
+    // while (self.socketConnected)
+    // {
+    //     if (ringBuffer.available() >= (TRANSMIT_CHUNKSIZE))
+    //     {
+    //         rc = recv(
+    //                 self.sock,
+    //                 ringBuffer.get_write_byte(),
+    //                 (TRANSMIT_CHUNKSIZE),
+    //                 0
+    //             );
+    //         if (rc < 0)
+    //         {
+    //             DEBUG_ERR("recv rc == " << rc << '\n');
+    //             self.socketConnected = false;
+    //             break;
+    //         }
+
+    //         ringBuffer.report_written_bytes(TRANSMIT_CHUNKSIZE);
+    //     }
+    //     delay_ticks_count(&delayCounter, 125, 1);
+    // }
+
+    // DEBUG_OUT("Closing socket...\n");
+
+    // rc = close(self.sock);
+
+    // DEBUG_OUT("close rc: " << rc << '\n');
+    // DEBUG_OUT("Socket closed\n");
+
+    // DEBUG_OUT("Exiting socket_client_udp\n");
+}
+
+
+
+
+
+
 
 /* Main */
 
@@ -779,13 +1035,14 @@ extern "C" void app_main(void)
     i2s.set_pin_word_select(I2S_WS);
     i2s.set_pin_data_out(I2S_DO);
     i2s.set_pin_data_in(I2S_DI);
+    i2s.set_channels(NUM_CHANNELS);
     i2s.set_bit_depth(BITS_PER_SAMPLE);
     i2s.set_sample_rate(SAMPLE_RATE);
     i2s.set_buffer_length(
             ringBuffer.buffer_length(),
             ringBuffer.ring_length()
         );
-    i2s.set_auto_clear(false);
+    i2s.set_auto_clear(true);
     i2s.start();
     DEBUG_OUT("i2s configuration complete\n");
     
@@ -799,18 +1056,21 @@ extern "C" void app_main(void)
         /* Enable soft AP mode for transmitter */
         rc = config_ap();
 
+        // osc.set_sample_rate(SAMPLE_RATE);
+        // osc.set_frequency(1000);
+        // osc.scale = 0.125;
+
         /* Pre-buffer samples */
         while (ringBuffer.available())
         {
             DEBUG_OUT("Pre-buffering samples from i2s...\n");
             i2s_to_ring_buffer();
+            // osc_to_ring_buffer();
         }
         DEBUG_OUT("Pre-buffered " << ringBuffer.buffered());
         DEBUG_OUT(" samples from i2s");
         DEBUG_OUT(" of total ring sample length of ");
         DEBUG_OUT(ringBuffer.size() << '\n');
-
-        // ringBuffer.rotate_write_index();
     }
     else
     {
@@ -831,16 +1091,20 @@ extern "C" void app_main(void)
 
     if (txMode)
     {
-        // std::async(std::launch::async, &i2s_to_ring_buffer);
-        socket_server();
+        DEBUG_OUT("Launching i2s_to_buffer_loop...\n");
+        std::thread loop(i2s_to_buffer_loop);
+        socket_server_tcp();
     }
     else
     {
-        // std::async(std::launch::async, &ring_buffer_to_i2s);
+        std::thread loop(buffer_to_i2s_loop);
         while (true)
         {
-            socket_client();
+            socket_client_tcp();
+
+            /* Flush buffer when socket closes */
+            DEBUG_ERR("Disconnected; flushing buffer...\n");
+            ringBuffer.fill(0);
         }
     }
 }
-
