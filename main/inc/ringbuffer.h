@@ -14,8 +14,15 @@
 #include <stdexcept>
 #include <type_traits>
 
+/* Whether the first read index
+will be advanced automatically
+after the first write or whether it
+will be rotated manually.  Enabling
+this directive adds an additional check
+during each write buffer rotation.
+Disable for maximum performance. */
 #ifndef RINGBUFF_AUTO_FIRST_ROTATE
-#define RINGBUFF_AUTO_FIRST_ROTATE  0
+#define RINGBUFF_AUTO_FIRST_ROTATE  1
 #endif
 
 namespace Buffer

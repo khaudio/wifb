@@ -3,28 +3,6 @@
  * Copyright 2022 K Hughes Production LLC
  */
 
-/** TODO:
- *      tcp socket for mac and metadata
- *      udp socket for audio data
- * 
- *      server
- *          launch client_handler in thread at boot?
- *              put client in queue to handler when connected
- *          timecode generator/transmitter
- *              different network socket or interleave
- *              to either channel
- *              other i2s interface
- *                  builtin?
- *                      8-bit should be fine for LTC
- *              update timecode library
- *                  better formatting
- *                  read LTC input
- * 
- *      client
- *          receive timecode
- *              LTC output
- */
-
 #include <iostream>
 #include <cstring>
 
