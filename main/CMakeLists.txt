@@ -36,7 +36,7 @@ target_compile_options(${COMPONENT_LIB}
 
 target_compile_definitions(${COMPONENT_LIB}
     PRIVATE
-        _DEBUG=1
+        _DEBUG=0
         DEFUALT_MODE_TRANSMIT=1
         NUM_CHANNELS=1
         SAMPLE_RATE=48000

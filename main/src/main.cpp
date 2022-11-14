@@ -303,10 +303,11 @@ void ap_event_handler(
 {
     if (eventId == WIFI_EVENT_AP_STACONNECTED)
     {
+        #if _DEBUG
         wifi_event_ap_staconnected_t* event = reinterpret_cast<wifi_event_ap_staconnected_t*>(data);
-
         DEBUG_OUT("Station " << mac_addr_string(event->mac) << " connected\n");
         DEBUG_OUT("eventBase == " << eventBase << '\n');
+        #endif
     }
     else if (eventId == WIFI_EVENT_AP_STADISCONNECTED)
     {
@@ -1098,18 +1099,12 @@ extern "C" void app_main(void)
         // osc.set_sample_rate(SAMPLE_RATE);
         // osc.set_frequency(1000);
         // osc.scale = 0.125;
-
-        DEBUG_OUT("Launching i2s_to_buffer_loop...\n");
-        std::thread loop(i2s_to_buffer_loop);
     }
     else
     {
         /* Enable STA mode for client
         to connect to transmitter AP */
         rc = config_sta();
-
-        DEBUG_OUT("Launching buffer_to_i2s_loop...\n");
-        std::thread loop(buffer_to_i2s_loop);
     }
     if (rc)
     {
@@ -1124,11 +1119,17 @@ extern "C" void app_main(void)
 
     if (txMode)
     {
+        DEBUG_OUT("Launching i2s_to_buffer_loop...\n");
+        std::thread loop(i2s_to_buffer_loop);
+
         socket_server_tcp();
         // socket_server_udp();
     }
     else
     {
+        DEBUG_OUT("Launching buffer_to_i2s_loop...\n");
+        std::thread loop(buffer_to_i2s_loop);
+
         // socket_client_udp();
         while (true)
         {
