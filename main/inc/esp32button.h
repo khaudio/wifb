@@ -10,7 +10,6 @@ typedef int gpio_num_t;
 #endif
 
 /* Simple ESP32 input buttons */
-
 namespace Esp32Button
 {
 
@@ -40,7 +39,6 @@ public:
 };
 
 /* A soft, non-blocking debounce mechanism */
-
 class Debouncer
 {
 protected:
@@ -55,7 +53,6 @@ public:
 };
 
 /* A button that must be held momentarily to change state */
-
 class MomentaryButton : public SimpleButton
 {
 protected:
@@ -73,7 +70,6 @@ public:
 };
 
 /* Momentary button with an external override trigger */
-
 class DualActionButton :
 public MomentaryButton,
 public Debouncer

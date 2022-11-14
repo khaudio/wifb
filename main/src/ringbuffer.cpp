@@ -259,7 +259,8 @@ inline int_fast32_t Base<T, I>::buffers_processed() const
 template <typename T, typename I>
 inline void Base<T, I>::rotate_read_index()
 {
-    this->readIndex = ++this->readIndex % this->_ringLength;
+    ++this->readIndex;
+    this->readIndex = this->readIndex % this->_ringLength;
 }
 
 template <typename T, typename I>
@@ -329,9 +330,10 @@ inline void Base<T, I>::report_read_bytes(int_fast32_t numBytes)
 template <typename T, typename I>
 inline void Base<T, I>::rotate_write_index()
 {
-    this->writeIndex = ++this->writeIndex % this->_ringLength;
+    ++this->writeIndex;
+    this->writeIndex = this->writeIndex % this->_ringLength;
 
-    #ifdef RINGBUFF_AUTO_FIRST_ROTATE
+    #if RINGBUFF_AUTO_FIRST_ROTATE
     if (!this->_firstWritten)
     {
         this->_firstWritten = true;
@@ -414,7 +416,8 @@ inline void Base<T, I>::report_written_bytes(int_fast32_t numBytes)
 template <typename T, typename I>
 inline void Base<T, I>::rotate_processing_index()
 {
-    this->processingIndex = ++this->processingIndex % this->_ringLength;
+    ++this->processingIndex;
+    this->processingIndex = this->processingIndex % this->_ringLength;
 }
 
 template <typename T, typename I>

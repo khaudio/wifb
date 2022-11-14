@@ -63,7 +63,7 @@ void Bus::_enable()
 void Bus::set_buffer_length(int length, int count)
 {
     /* Sets DMA buffer length */
-    #ifdef _DEBUG
+    #if _DEBUG
     if (
             (this->_stdConfig.slot_cfg.data_bit_width == I2S_DATA_BIT_WIDTH_24BIT)
             && (length % 3)
@@ -130,7 +130,7 @@ void Bus::set_channels(uint16_t channels)
     {
         this->_stdConfig.slot_cfg.slot_mode = I2S_SLOT_MODE_STEREO;
     }
-    #ifdef _DEBUG
+    #if _DEBUG
     else
     {
         throw std::out_of_range("Channels must be 1 <= channels <= 2");
@@ -149,7 +149,7 @@ void Bus::set_channels(uint16_t channels)
 
 void Bus::set_i2s_bus_num(int num)
 {
-    #ifdef _DEBUG
+    #if _DEBUG
     if ((num < 0) || (num > 1))
     {
         throw std::out_of_range("I2S bus number must be 0 or 1");
@@ -240,7 +240,7 @@ void Bus::write_bytes(const void* data, int_fast32_t numBytes)
             &(this->_numBytesWritten),
             this->_numTicksToWait
         );
-    #ifdef _DEBUG
+    #if _DEBUG
     if (numBytes != this->_numBytesWritten)
     {
         std::cerr << "Error: " << this->_numBytesWritten;
@@ -265,7 +265,7 @@ void Bus::read_bytes(void* data, int_fast32_t numBytes)
         &(this->_numBytesRead),
         this->_numTicksToWait
     );
-    #ifdef _DEBUG
+    #if _DEBUG
     if (numBytes != this->_numBytesRead)
     {
         std::cerr << "Error: " << this->_numBytesRead;

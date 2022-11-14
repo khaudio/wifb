@@ -30,14 +30,14 @@ target_compile_options(${COMPONENT_LIB}
         -fpermissive
         -Wshadow-compatible-local
         -Wno-error
-        -Wno-sequence-point
+        -Wno-error=sequence-point
         -Wno-missing-field-initializers
 )
 
 target_compile_definitions(${COMPONENT_LIB}
     PRIVATE
         _DEBUG=1
-        CONFIG_MODE_TRANSMIT=0
+        DEFUALT_MODE_TRANSMIT=1
         NUM_CHANNELS=1
         SAMPLE_RATE=48000
         BITS_PER_SAMPLE=16

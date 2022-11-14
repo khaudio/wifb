@@ -97,9 +97,9 @@
 #endif
 #endif
 
-/* Whether this unit is in transmit mode */
-#ifndef CONFIG_MODE_TRANSMIT
-#define CONFIG_MODE_TRANSMIT        0
+/* Whether this unit defaults to transmit mode */
+#ifndef DEFUALT_MODE_TRANSMIT
+#define DEFUALT_MODE_TRANSMIT        0
 #endif
 
 /* Transmitter ipv4 address */
@@ -110,7 +110,7 @@
 /*                             Variables                            */
 
 /* Transmit or receive */
-static bool txMode(CONFIG_MODE_TRANSMIT);
+static bool txMode(DEFUALT_MODE_TRANSMIT);
 
 /* Audio I/O */
 static Buffer::AtomicMultiReadRingBuffer<AUDIO_DATATYPE> ringBuffer(
@@ -1099,23 +1099,17 @@ extern "C" void app_main(void)
         // osc.set_frequency(1000);
         // osc.scale = 0.125;
 
-        /* Pre-buffer samples */
-        while (ringBuffer.available())
-        {
-            DEBUG_OUT("Pre-buffering samples from i2s...\n");
-            i2s_to_ring_buffer();
-            // osc_to_ring_buffer();
-        }
-        DEBUG_OUT("Pre-buffered " << ringBuffer.buffered());
-        DEBUG_OUT(" samples from i2s");
-        DEBUG_OUT(" of total ring sample length of ");
-        DEBUG_OUT(ringBuffer.size() << '\n');
+        DEBUG_OUT("Launching i2s_to_buffer_loop...\n");
+        std::thread loop(i2s_to_buffer_loop);
     }
     else
     {
         /* Enable STA mode for client
         to connect to transmitter AP */
         rc = config_sta();
+
+        DEBUG_OUT("Launching buffer_to_i2s_loop...\n");
+        std::thread loop(buffer_to_i2s_loop);
     }
     if (rc)
     {
@@ -1124,24 +1118,21 @@ extern "C" void app_main(void)
         DEBUG_ERR("Rebooting...\n");
         esp_restart();
     }
-    
+
     DEBUG_OUT("Networking configured\n");
     DEBUG_OUT("WIFB initialized\n");
 
     if (txMode)
     {
-        DEBUG_OUT("Launching i2s_to_buffer_loop...\n");
-        std::thread loop(i2s_to_buffer_loop);
         socket_server_tcp();
         // socket_server_udp();
     }
     else
     {
-        std::thread loop(buffer_to_i2s_loop);
+        // socket_client_udp();
         while (true)
         {
             socket_client_tcp();
-            // socket_client_udp();
 
             /* Flush buffer when socket closes */
             DEBUG_ERR("Disconnected; flushing buffer...\n");

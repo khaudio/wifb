@@ -49,7 +49,7 @@ bool MultiRingBuffer<T, I>::size_is_set() const
     {
         if (!buff.size_is_set())
         {
-            #ifdef _DEBUG
+            #if _DEBUG
             std::cerr << "Error: sub buffer size not set\n";
             #endif
             
@@ -57,7 +57,7 @@ bool MultiRingBuffer<T, I>::size_is_set() const
         }
     }
 
-    #ifdef _DEBUG
+    #if _DEBUG
     if (!(this->buffers.size() > 0)) std::cerr << "No sub buffers\n";
     if (!(this->_ringLength > 0)) std::cerr << "Nothing in ring\n";
     if (!(this->_bufferLength > 0)) std::cerr << "Buffers not allocated\n";
@@ -77,7 +77,7 @@ void MultiRingBuffer<T, I>::set_size(
         int_fast8_t numBuffers
     )
 {
-    #ifdef _DEBUG
+    #if _DEBUG
     if (numBuffers < 2) throw BUFFER_COUNT_TOO_SHORT;
     #endif
 
@@ -132,7 +132,7 @@ auto MultiRingBuffer<T, I>::get_buffer(
         int_fast8_t bufferIndex
     )
 {
-    #ifdef _DEBUG
+    #if _DEBUG
     return this->buffers.at(bufferIndex);
     #else
     return this->buffers[bufferIndex];
@@ -142,7 +142,7 @@ auto MultiRingBuffer<T, I>::get_buffer(
 template <typename T, typename I>
 void MultiRingBuffer<T, I>::_update_sample_counters()
 {
-    #ifdef _DEBUG
+    #if _DEBUG
     int_fast32_t
         leastBuffered(this->buffers.at(0).buffered()),
         leastSamplesWritten(this->buffers.at(0)._samplesWritten),
@@ -157,7 +157,7 @@ void MultiRingBuffer<T, I>::_update_sample_counters()
     #endif
     for (int i(1); i < this->_numBuffers; ++i)
     {
-        #ifdef _DEBUG
+        #if _DEBUG
         RingBuffer<T, I>& buff = this->buffers.at(i);
         #else
         RingBuffer<T, I>& buff = this->buffers[i];
@@ -235,7 +235,7 @@ inline void MultiRingBuffer<T, I>::read_interleaved(std::vector<T>* data)
 
     for (int_fast32_t i(0); i < this->_bufferLength; ++i)
     {
-        #ifdef _DEBUG
+        #if _DEBUG
         this->buffers.at(buffIndex).read_samples(&(data->at(i)), 1);
         #else
         this->buffers[buffIndex].read_samples(&((*data)[i]), 1);
@@ -251,7 +251,7 @@ inline void MultiRingBuffer<T, I>::read_samples_interleaved(
         int_fast32_t length
     )
 {
-    #ifdef _DEBUG
+    #if _DEBUG
     if (length > (this->_bufferLength * this->_numBuffers))
     {
         throw std::out_of_range(
@@ -264,7 +264,7 @@ inline void MultiRingBuffer<T, I>::read_samples_interleaved(
 
     for (int_fast32_t i(0); i < length; ++i)
     {
-        #ifdef _DEBUG
+        #if _DEBUG
         this->buffers.at(buffIndex).read_samples(data + i, 1);
         #else
         this->buffers[buffIndex].read_samples(data + i, 1);
@@ -303,7 +303,7 @@ inline void MultiRingBuffer<T, I>::read_concatenated(std::vector<T>* data)
 
     for (int_fast8_t i(0); i < this->_numBuffers; ++i)
     {
-        #ifdef _DEBUG
+        #if _DEBUG
         this->buffers.at(i).read_samples(
                 &(data->at(sampleIndex)),
                 numSamples
@@ -325,7 +325,7 @@ inline void MultiRingBuffer<T, I>::read_samples_concatenated(
         int_fast32_t length
     )
 {
-    #ifdef _DEBUG
+    #if _DEBUG
     if (length > (this->_bufferLength * this->_numBuffers))
     {
         throw std::out_of_range(
@@ -340,7 +340,7 @@ inline void MultiRingBuffer<T, I>::read_samples_concatenated(
 
     for (int_fast8_t i(0); i < this->_numBuffers; ++i)
     {
-        #ifdef _DEBUG
+        #if _DEBUG
         this->buffers.at(i).read_samples(data + sampleIndex, numSamples);
         #else
         this->buffers[i].read_samples(data + sampleIndex, numSamples);
@@ -365,7 +365,7 @@ inline void MultiRingBuffer<T, I>::read_bytes_concatenated(
 template <typename T, typename I>
 int_fast32_t MultiRingBuffer<T, I>::write(T data, bool force)
 {
-    #ifdef _DEBUG
+    #if _DEBUG
     if (!size_is_set())
     {
         std::cerr << "Error: size not set!\n";
@@ -375,7 +375,7 @@ int_fast32_t MultiRingBuffer<T, I>::write(T data, bool force)
 
     for (RingBuffer<T, I>& buff: this->buffers)
     {
-        #ifdef _DEBUG
+        #if _DEBUG
         if (buff.write(data, force) > 1)
         {
             throw std::out_of_range("Must not be > 1 sample");
@@ -396,7 +396,7 @@ int_fast32_t MultiRingBuffer<T, I>::write(
         bool force
     )
 {
-    #ifdef _DEBUG
+    #if _DEBUG
     if (!size_is_set())
     {
         std::cerr << "Error: size not set!\n";
@@ -423,7 +423,7 @@ int_fast32_t MultiRingBuffer<T, I>::write_samples(
         bool force
     )
 {
-    #ifdef _DEBUG
+    #if _DEBUG
     if (!size_is_set())
     {
         std::cerr << "Error: size not set!\n";
@@ -451,7 +451,7 @@ int_fast32_t MultiRingBuffer<T, I>::write_bytes(
         bool force
     )
 {
-    #ifdef _DEBUG
+    #if _DEBUG
     if (!size_is_set())
     {
         std::cerr << "Error: size not set!\n";

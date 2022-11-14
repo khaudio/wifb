@@ -28,9 +28,9 @@ void delay_ticks_count(int* counter, int threshold, int numTicks)
     delay_ticks(numTicks);
 }
 
-void delay_ms_count(int* counter, int threshold, int numTicks)
+void delay_ms_count(int* counter, int threshold, int ms)
 {
     /* Delay after a specified number of external iterations */
     if (++(*counter) %= threshold) return;
-    delay_ms(numTicks);
+    delay_ms(ms);
 }
