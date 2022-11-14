@@ -38,11 +38,11 @@
 
 /*                           Declarations                           */
 
-struct WIFBClient
+struct WIFBDevice
 {
     uint8_t mac[6];
     uint8_t ip[4];
-    std::atomic_int sock{0};
+    int sock{0};
     std::atomic_bool
         networkConnected{false},
         socketConnected{false};

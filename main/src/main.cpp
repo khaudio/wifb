@@ -102,13 +102,15 @@
 #define CONFIG_MODE_TRANSMIT        0
 #endif
 
+/* Transmitter ipv4 address */
+#ifndef TRANSMITTER_IPV4_ADDR
+#define TRANSMITTER_IPV4_ADDR       "192.168.4.1"
+#endif
+
 /*                             Variables                            */
 
 /* Transmit or receive */
 static bool txMode(CONFIG_MODE_TRANSMIT);
-
-/* Latency compensation in samples */
-static int numSamplesOffset(0);
 
 /* Audio I/O */
 static Buffer::AtomicMultiReadRingBuffer<AUDIO_DATATYPE> ringBuffer(
@@ -120,8 +122,8 @@ static I2S::Bus i2s;
 /* Hardware button */
 static Esp32Button::DualActionButton button(BUTTON_PIN);
 
-static WIFBClient self;
-static std::vector<std::shared_ptr<WIFBClient>> connectedClients;
+static WIFBDevice self;
+static std::vector<std::shared_ptr<WIFBDevice>> connectedClients;
 static int retryNum = 0;
 static EventGroupHandle_t staEventGroup;
 
@@ -140,7 +142,7 @@ void buffer_to_i2s_loop(void);
 
 /* Networking */
 
-std::shared_ptr<WIFBClient> get_client_from_mac(const uint8_t addr[6]);
+std::shared_ptr<WIFBDevice> get_client_from_mac(const uint8_t addr[6]);
 
 /* Transmitter */
 
@@ -154,7 +156,7 @@ int config_ap(void);
 void purge_disconnected_clients(void);
 void socket_server_tcp(void);
 void socket_server_udp(void);
-void client_sock_handler(std::shared_ptr<WIFBClient> client);
+void client_sock_handler(std::shared_ptr<WIFBDevice> client);
 
 /* Receiver */
 
@@ -275,11 +277,11 @@ void buffer_to_i2s_loop(void)
 
 /* Networking */
 
-std::shared_ptr<WIFBClient> get_client_from_mac(const uint8_t addr[6])
+std::shared_ptr<WIFBDevice> get_client_from_mac(const uint8_t addr[6])
 {
     DEBUG_OUT("Retrieving client from mac addr...\n");
 
-    for (std::shared_ptr<WIFBClient> c: connectedClients)
+    for (std::shared_ptr<WIFBDevice> c: connectedClients)
     {
         if (c == nullptr) continue;
         else if (match_mac_addr(c->mac, addr)) return c;
@@ -310,7 +312,7 @@ void ap_event_handler(
     {
         wifi_event_ap_stadisconnected_t* event = reinterpret_cast<wifi_event_ap_stadisconnected_t*>(data);
         
-        std::shared_ptr<WIFBClient> client = get_client_from_mac(event->mac);
+        std::shared_ptr<WIFBDevice> client = get_client_from_mac(event->mac);
         if (client != nullptr)
         {
             client->socketConnected = false;
@@ -381,7 +383,7 @@ void purge_disconnected_clients()
     DEBUG_OUT("Purging ");
     #endif
 
-    std::vector<std::vector<std::shared_ptr<WIFBClient>>::iterator> purgeList;
+    std::vector<std::vector<std::shared_ptr<WIFBDevice>>::iterator> purgeList;
     int length(0);
     for (
             auto it = std::begin(connectedClients);
@@ -389,7 +391,7 @@ void purge_disconnected_clients()
             ++it
         )
     {
-        std::shared_ptr<WIFBClient> c = *it;
+        std::shared_ptr<WIFBDevice> c = *it;
         if (c == nullptr) continue;
         else if (!c->socketConnected)
         {
@@ -466,7 +468,7 @@ void socket_server_tcp(void)
     uint8_t incomingMacAddr[6];
     socklen_t clientAddressLength;
     int clientSock;
-    std::shared_ptr<WIFBClient> client;
+    std::shared_ptr<WIFBDevice> client;
 
     while (true)
     {
@@ -492,7 +494,7 @@ void socket_server_tcp(void)
             // Create new client
             DEBUG_OUT("New client found:\n");
 
-            client = std::make_shared<WIFBClient>();
+            client = std::make_shared<WIFBDevice>();
             connectedClients.push_back(client);
             
             // Purge inactive receivers from client list
@@ -529,105 +531,134 @@ void socket_server_tcp(void)
 
         DEBUG_OUT("Client handler launched\n");
         
-        DEBUG_OUT("Incrementing delay counter...\n")
+        DEBUG_OUT("Incrementing delay counter...\n");
         delay_ticks_count(&delayCounter, 125, 1);
-        DEBUG_OUT("Delay counter incremented\n")
+        DEBUG_OUT("Delay counter incremented\n");
     }
     DEBUG_ERR("Exiting socket_server_tcp\n");
 }
 
-
-
 void socket_server_udp(void)
 {
-    // int rc;
-    // DEBUG_OUT("Starting udp socket server\n");
+    DEBUG_OUT("Starting udp socket server\n");
 
-    // struct sockaddr_in serverAddress, clientAddress;
-    
-    // DEBUG_OUT("Creating socket...\n");
+    int rc;
+    int delayCounter(0);
+    uint8_t rx_buffer[128];
+    const char* tx_buffer = "hello from socket_server_udp";
+    struct sockaddr_in serverAddress;
 
-    // // Create a socket that we will listen upon.
-    // self.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
-    // if (self.sock < 0)
-    // {
-    //     DEBUG_ERR("socket: " << self.sock << errno << '\n');
-    //     return;
-    // }
+    while (true)
+    {
+        DEBUG_OUT("Creating socket...\n");
+        self.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+        if (self.sock < 0)
+        {
+            DEBUG_ERR("Error creating socket\n");
+            break;
+        }
+        else
+        {
+            DEBUG_OUT("Socket created\n");
+        }
 
-    // int enable = 1;
-    // lwip_setsockopt(self.sock, IPPROTO_IP, IP_PKTINFO, &enable, sizeof(enable));
+        int enable = 1;
+        lwip_setsockopt(
+                self.sock,
+                IPPROTO_IP,
+                IP_PKTINFO,
+                &enable,
+                sizeof(enable)
+            );
 
-    // // Set timeout
-    // struct timeval timeout;
-    // timeout.tv_sec = 10;
-    // timeout.tv_usec = 0;
-    // setsockopt(self.sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+        struct timeval timeout;
+        timeout.tv_sec = 10;
+        timeout.tv_usec = 0;
+        setsockopt(
+                self.sock,
+                SOL_SOCKET,
+                SO_RCVTIMEO,
+                &timeout,
+                sizeof(timeout)
+            );
 
-    // DEBUG_OUT("Binding socket to port...\n");
+        DEBUG_OUT("Binding socket to port...\n");
+        serverAddress.sin_family = AF_INET;
+        serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+        serverAddress.sin_port = htons(CONFIG_PORT);
+        rc = bind(
+                self.sock,
+                reinterpret_cast<sockaddr*>(&serverAddress),
+                sizeof(serverAddress)
+            );
+        if (rc < 0)
+        {
+            DEBUG_ERR("bind err; rc: " << rc << '\n');
+            return;
+        }
 
-    // // Bind our server socket to a port
-    // serverAddress.sin_family = AF_INET;
-    // serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    // serverAddress.sin_port = htons(CONFIG_PORT);
+        struct sockaddr_storage source_addr;
+        socklen_t socklen = sizeof(source_addr);
 
-    // rc = bind(
-    //         self.sock,
-    //         reinterpret_cast<sockaddr*>(&serverAddress),
-    //         sizeof(serverAddress)
-    //     );
-    // if (rc < 0)
-    // {
-    //     DEBUG_ERR("bind err; rc: " << rc << '\n');
-    //     return;
-    // }
+        struct iovec iov;
+        struct msghdr msg;
+        uint8_t cmsg_buf[CMSG_SPACE(sizeof(struct in_pktinfo))];
 
-    // struct sockaddr_storage source_addr;
-    // socklen_t socklen = sizeof(source_addr);
+        iov.iov_base = rx_buffer;
+        iov.iov_len = sizeof(rx_buffer);
+        msg.msg_control = cmsg_buf;
+        msg.msg_controllen = sizeof(cmsg_buf);
+        msg.msg_flags = 0;
+        msg.msg_iov = &iov;
+        msg.msg_iovlen = 1;
+        msg.msg_name = reinterpret_cast<sockaddr*>(&source_addr);
+        msg.msg_namelen = socklen;
 
-    // struct iovec iov;
-    // struct msghdr msg;
-    // struct cmsghdr* cmsgtmp;
-    // uint8_t cmsg_buf[CMSG_SPACE(sizeof(struct in_pktinfo))];
+        while (true)
+        {
+            DEBUG_OUT("Waiting for data...\n");
+            int length = recvmsg(self.sock, &msg, 0);
 
-    // iov.iov_base = rx_buffer;
-    // iov.iov_len = sizeof(rx_buffer);
-    // msg.msg_control = cmsg_buf;
-    // msg.msg_controllen = sizeof(cmsg_buf);
-    // msg.msg_flags = 0;
-    // msg.msg_iov = &iov;
-    // msg.msg_iovlen = 1;
-    // msg.msg_name = reinterpret_cast<sockaddr*>(&source_addr);
-    // msg.msg_namelen = socklen;
+            if (length < 0)
+            {
+                DEBUG_ERR("Error receiving data\n");
+                break;
+            }
 
-    // while (true)
-    // {
-    //     DEBUG_OUT("Waiting for data...\n");
-    //     int len = recvmsg(self.sock, &msg, 0);
+            rx_buffer[length] = 0;
+            DEBUG_OUT("Data received of length " << length);
+            DEBUG_OUT("\n\t" << rx_buffer << '\n');
 
-    //     if (len < 0)
-    //     {
-    //         DEBUG_ERR("Error receiving data\n");
-    //         break;
-    //     }
-    //     else
-    //     {
-    //         DEBUG_OUT("Data received of length " << length << '\n');
-    //     }
+            rc = sendto(
+                    self.sock,
+                    tx_buffer,
+                    strlen(tx_buffer),
+                    0,
+                    reinterpret_cast<sockaddr*>(&source_addr),
+                    sizeof(source_addr)
+                );
+            if (rc < 0)
+            {
+                DEBUG_ERR("Error occurred during sending\n");
+                break;
+            }
+            DEBUG_OUT("Data sent\n");
 
-    //     DEBUG_OUT("Incrementing delay counter...\n")
-    //     delay_ticks_count(&delayCounter, 125, 1);
-    //     DEBUG_OUT("Delay counter incremented\n")
-    // }
+            delay_ticks_count(&delayCounter, 125, 1);
+        }
 
-    // DEBUG_ERR("Exiting socket_server_udp\n");
+        if (self.sock != -1)
+        {
+            DEBUG_ERR("Shutting down socket and restarting...\n");
+            shutdown(self.sock, 0);
+            close(self.sock);
+        }
+    }
+
+    DEBUG_ERR("Exiting socket_server_udp\n");
 }
 
-
-
-
-
-void client_sock_handler(std::shared_ptr<WIFBClient> client)
+void client_sock_handler(std::shared_ptr<WIFBDevice> client)
 {
     int delayCounter(0);
     int rc;
@@ -635,7 +666,7 @@ void client_sock_handler(std::shared_ptr<WIFBClient> client)
     int_fast8_t numReaders = ringBuffer.num_readers();
 
     DEBUG_OUT("Current num readers: " << +numReaders);
-    DEBUG_OUT("\nSetting new num readers to: ")
+    DEBUG_OUT("\nSetting new num readers to: ");
     DEBUG_OUT(+((numReaders > 1) ? (numReaders + 1) : numReaders));
     DEBUG_OUT('\n');
 
@@ -667,6 +698,10 @@ void client_sock_handler(std::shared_ptr<WIFBClient> client)
                     (TRANSMIT_CHUNKSIZE),
                     0
                 );
+            if (rc < 0)
+            {
+                DEBUG_ERR("Error sending data\n");
+            }
             
             DEBUG_OUT("Reporting " << (TRANSMIT_CHUNKSIZE) << " read bytes to buffer\n");
             
@@ -862,7 +897,11 @@ void socket_client_tcp(void)
 
     struct sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
-    inet_pton(AF_INET, "192.168.4.1", &serverAddress.sin_addr.s_addr);
+    inet_pton(
+            AF_INET,
+            TRANSMITTER_IPV4_ADDR,
+            &serverAddress.sin_addr.s_addr
+        );
     serverAddress.sin_port = htons(CONFIG_PORT);
 
     DEBUG_OUT("Connecting to server...\n");
@@ -913,81 +952,103 @@ void socket_client_tcp(void)
     DEBUG_OUT("Exiting socket_client_tcp\n");
 }
 
-
-
-
-
-
 void socket_client_udp(void)
 {
-    // DEBUG_OUT("Starting socket_client_udp...\n");
-    // DEBUG_OUT("Creating socket...\n");
+    DEBUG_OUT("Starting socket_client_udp...\n");
 
-    // int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
-    // self.sock = sock;
+    const char* tx_buffer = "hello from socket_client_udp";
+    int delayCounter(0);
+    int rc;
 
-    // DEBUG_OUT("socket rc: " << self.sock << '\n');
+    uint8_t rx_buffer[128];
 
-    // struct sockaddr_in serverAddress;
-    // serverAddress.sin_family = AF_INET;
-    // inet_pton(AF_INET, "192.168.4.1", &serverAddress.sin_addr.s_addr);
-    // serverAddress.sin_port = htons(CONFIG_PORT);
+    while (true)
+    {
 
-    // DEBUG_OUT("Connecting to server...\n");
-    // int rc = connect(
-    //         self.sock,
-    //         (struct sockaddr*)&serverAddress,
-    //         sizeof(struct sockaddr_in)
-    //     );
-    // DEBUG_OUT("connect rc: " << rc << '\n');
+        struct sockaddr_in dest_addr;
+        dest_addr.sin_addr.s_addr = inet_addr(TRANSMITTER_IPV4_ADDR);
+        dest_addr.sin_family = AF_INET;
+        dest_addr.sin_port = htons(CONFIG_PORT);
 
-    // if (self.socketConnected = (rc >= 0))
-    // {
-    //     send(self.sock, self.mac, 6, 0);
-    //     DEBUG_OUT("Send self mac addr: " << mac_addr_string(self.mac) << '\n');
-    // }
+        DEBUG_OUT("Creating socket...\n");
 
-    // int delayCounter(0);
+        self.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
 
-    // while (self.socketConnected)
-    // {
-    //     if (ringBuffer.available() >= (TRANSMIT_CHUNKSIZE))
-    //     {
-    //         rc = recv(
-    //                 self.sock,
-    //                 ringBuffer.get_write_byte(),
-    //                 (TRANSMIT_CHUNKSIZE),
-    //                 0
-    //             );
-    //         if (rc < 0)
-    //         {
-    //             DEBUG_ERR("recv rc == " << rc << '\n');
-    //             self.socketConnected = false;
-    //             break;
-    //         }
+        if (self.sock < 0)
+        {
+            DEBUG_ERR("Unable to create socket\n");
+            break;
+        }
 
-    //         ringBuffer.report_written_bytes(TRANSMIT_CHUNKSIZE);
-    //     }
-    //     delay_ticks_count(&delayCounter, 125, 1);
-    // }
+        struct timeval timeout;
+        timeout.tv_sec = 2;
+        timeout.tv_usec = 0;
+        setsockopt(
+                self.sock,
+                SOL_SOCKET,
+                SO_RCVTIMEO,
+                &timeout,
+                sizeof(timeout)
+            );
 
-    // DEBUG_OUT("Closing socket...\n");
+        DEBUG_OUT("Socket created, sending to ");
+        DEBUG_OUT(TRANSMITTER_IPV4_ADDR << ":" << CONFIG_PORT << '\n');
 
-    // rc = close(self.sock);
+        while (true)
+        {
+            rc = sendto(
+                    self.sock,
+                    tx_buffer,
+                    strlen(tx_buffer),
+                    0,
+                    reinterpret_cast<sockaddr*>(&dest_addr),
+                    sizeof(dest_addr)
+                );
+                
+            if (rc < 0)
+            {
+                DEBUG_ERR("Error occurred during sending\n");
+                break;
+            }
+            DEBUG_OUT("Message sent\n");
 
-    // DEBUG_OUT("close rc: " << rc << '\n');
-    // DEBUG_OUT("Socket closed\n");
+            struct sockaddr_storage source_addr;
+            socklen_t socklen = sizeof(source_addr);
+            int length = recvfrom(
+                    self.sock,
+                    rx_buffer,
+                    sizeof(rx_buffer) - 1,
+                    0,
+                    reinterpret_cast<sockaddr*>(&source_addr),
+                    &socklen
+                );
 
-    // DEBUG_OUT("Exiting socket_client_udp\n");
+            if (length < 0)
+            {
+                DEBUG_ERR("recvfrom failed\n");
+                break;
+            }
+            else
+            {
+                rx_buffer[length] = 0;
+                DEBUG_OUT("Data received of length " << length);
+                DEBUG_OUT(" from " << TRANSMITTER_IPV4_ADDR);
+                DEBUG_OUT("\n\t" << rx_buffer << '\n');
+            }
+
+            delay_ticks_count(&delayCounter, 125, 1);
+        }
+
+        if (self.sock != -1)
+        {
+            DEBUG_ERR("Shutting down socket and restarting...\n");
+            shutdown(self.sock, 0);
+            close(self.sock);
+        }
+    }
+
+    DEBUG_OUT("Exiting socket_client_udp\n");
 }
-
-
-
-
-
-
-
-/* Main */
 
 extern "C" void app_main(void)
 {
@@ -999,7 +1060,7 @@ extern "C" void app_main(void)
 
     /* Configure button and set transmit mode */
 
-    DEBUG_OUT("Configuring mode\n")
+    DEBUG_OUT("Configuring mode\n");
     button.set_hold_duration_ms(100);
     // Add a non-blocking while loop for button duration
     // txMode = button.read();
@@ -1072,6 +1133,7 @@ extern "C" void app_main(void)
         DEBUG_OUT("Launching i2s_to_buffer_loop...\n");
         std::thread loop(i2s_to_buffer_loop);
         socket_server_tcp();
+        // socket_server_udp();
     }
     else
     {
@@ -1079,6 +1141,7 @@ extern "C" void app_main(void)
         while (true)
         {
             socket_client_tcp();
+            // socket_client_udp();
 
             /* Flush buffer when socket closes */
             DEBUG_ERR("Disconnected; flushing buffer...\n");
