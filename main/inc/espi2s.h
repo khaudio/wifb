@@ -21,7 +21,9 @@ enum i2s_err
 
 class Bus
 {
+
 protected:
+
     bool
         _initialized,
         _started;
@@ -40,6 +42,7 @@ protected:
     virtual void _enable();
 
 public:
+
     Bus();
     Bus(const Bus& obj);
     ~Bus();
@@ -72,6 +75,7 @@ public:
     virtual void read_bytes(void* data, int_fast32_t numBytes);
     template <typename T>
     void read(std::vector<T>* data, int_fast32_t length);
+
 };
 
 };
