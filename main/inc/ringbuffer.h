@@ -22,7 +22,7 @@ this directive adds an additional check
 during each write buffer rotation.
 Disable for maximum performance. */
 #ifndef RINGBUFF_AUTO_FIRST_ROTATE
-#define RINGBUFF_AUTO_FIRST_ROTATE  1
+#define RINGBUFF_AUTO_FIRST_ROTATE          1
 #endif
 
 namespace Buffer
@@ -100,8 +100,6 @@ protected:
 
 public:
 
-    static constexpr const int_fast32_t bytesPerSample = sizeof(T);
-
     I
         readIndex{0},
         writeIndex{0},
@@ -135,7 +133,7 @@ public:
     virtual int_fast32_t buffer_length() const;
 
     /* Number of bytes per sample */
-    virtual int_fast32_t bytes_per_sample() const;
+    constexpr static int_fast32_t bytes_per_sample();
 
     /* Size in bytes of each buffer in the ring */
     virtual int_fast32_t bytes_per_buffer() const;

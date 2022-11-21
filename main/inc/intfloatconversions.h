@@ -32,7 +32,7 @@ constexpr inline void clip_float(T* value)
 }
 
 template <typename T>
-constexpr inline T roundf(T value)
+constexpr inline T round_float(T value)
 {
     int truncated(static_cast<int>(value));
     T remainder(value - static_cast<T>(truncated));
@@ -51,7 +51,7 @@ constexpr I float_to_int(F value)
     {
         if (value < 0)
         {
-            return static_cast<I>(roundf<F>(
+            return static_cast<I>(round_float<F>(
                     static_cast<F>(get_zero<I>())
                     + (value * static_cast<F>(get_zero<I>()))
                 ));
@@ -64,42 +64,13 @@ constexpr I float_to_int(F value)
     else if (value < 0)
     {
         return static_cast<I>(
-                roundf<F>(value * static_cast<F>(std::numeric_limits<I>::min()))
+                round_float<F>(-value * static_cast<F>(std::numeric_limits<I>::min()))
             );
     }
     return static_cast<I>(
-            roundf<F>(value * static_cast<F>(std::numeric_limits<I>::max()))
+            round_float<F>(value * static_cast<F>(std::numeric_limits<I>::max()))
         );
 }
-
-// template <typename F, typename I>
-// constexpr I float_to_int(F value)
-// {
-//     if (value == 0.0) return get_zero<I>();
-//     else if (std::is_unsigned<I>())
-//     {
-//         if (value < 0)
-//         {
-//             return static_cast<I>(std::round(
-//                     static_cast<F>(get_zero<I>())
-//                     + (value * static_cast<F>(get_zero<I>()))
-//                 ));
-//         }
-//         return static_cast<I>(
-//                 (value * (get_zero<I>() - 1))
-//                 + get_zero<I>()
-//             );
-//     }
-//     else if (value < 0)
-//     {
-//         return static_cast<I>(
-//                 std::round(value * std::numeric_limits<I>::min())
-//             );
-//     }
-//     return static_cast<I>(
-//             std::round(value * std::numeric_limits<I>::max())
-//         );
-// }
 
 template <typename F, typename I>
 constexpr void float_to_int(I* converted, F* value)
@@ -241,9 +212,9 @@ template void clip_float<float>(float*);
 template void clip_float<double>(double*);
 template void clip_float<long double>(long double*);
 
-template float roundf<float>(float);
-template double roundf<double>(double);
-template long double roundf<long double>(long double);
+template float round_float<float>(float);
+template double round_float<double>(double);
+template long double round_float<long double>(long double);
 
 // template int8_t float_to_int<float, int8_t>(float);
 // template uint8_t float_to_int<float, uint8_t>(float);

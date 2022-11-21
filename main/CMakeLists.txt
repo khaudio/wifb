@@ -26,11 +26,10 @@ list(APPEND LIBRARIES)
 
 target_compile_options(${COMPONENT_LIB}
     PRIVATE
+        -Wall
         -fexceptions
-        -fpermissive
-        -Wshadow-compatible-local
+        -Wshadow
         -Wno-error
-        -Wno-error=sequence-point
         -Wno-missing-field-initializers
 )
 

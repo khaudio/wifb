@@ -7,8 +7,11 @@
 
 #include "intfloatconversions.h"
 
+namespace LTC
+{
+
 template <typename Internal, typename Output>
-class LTCStaticWavetable
+class StaticWavetable
 {
 
 public:
@@ -663,7 +666,7 @@ protected:
     inline constexpr static std::array<Output, I> _convert(const std::array<Internal, I> values)
     {
         std::array<Output, I> converted;
-        for (size_t i(0); i < I; ++i)
+        for (int i(0); i < I; ++i)
         {
             converted[i] = ((
                     std::is_floating_point<Output>::value
@@ -702,52 +705,53 @@ public:
         oneBitPositive2997 = _convert<26>(_oneBitPositive2997),
         oneBitNegative2997 = _convert<26>(_oneBitNegative2997);
 
-    constexpr LTCStaticWavetable() {};
-    constexpr ~LTCStaticWavetable() {};
+    constexpr StaticWavetable() {};
+    constexpr ~StaticWavetable() {};
 
-    constexpr static int get_sample_rate(int fps)
+    constexpr static int sample_rate(int fps)
     {
         /* Returns the sample rate used for specified frame rate */
         return (fps == 30) ? 60000 : 48000;
     }
 
-    constexpr static int get_bit_length(int fps, bool slowdown)
+    constexpr static int bit_length(int fps, bool slowdown)
     {
         /* Get length of bit in samples */
         return 24 + (fps != 25) + slowdown;
     }
 
-    constexpr static std::vector<Output> get(int fps, bool slowdown, bool bit, bool polarity)
+    inline constexpr static std::vector<Output> _get_bit_24_fps(bool slowdown, bool bit, bool polarity)
     {
-        /* Returns a vector of samples for specified bit */
-        if (fps == 25)
-        {
-            auto begin = (
-                    bit
-                    ? (polarity ? oneBitPositive25.begin() : oneBitNegative25.begin())
-                    : (polarity ? zeroBitPositive25.begin() : zeroBitNegative25.begin())
-                );
-            auto end = (
-                    bit
-                    ? (polarity ? oneBitPositive25.end() : oneBitNegative25.end())
-                    : (polarity ? zeroBitPositive25.end() : zeroBitNegative25.end())
-                );
-            return std::vector<Output>(begin, end);
-        }
-        else if (fps == 24)
-        {
-            auto begin = (
-                    bit
-                    ? (polarity ? oneBitPositive2398.begin() : oneBitNegative2398.begin())
-                    : (polarity ? zeroBitPositive2398.begin() : zeroBitNegative2398.begin())
-                );
-            auto end = (
-                    bit
-                    ? (polarity ? oneBitPositive2398.end() : oneBitNegative2398.end())
-                    : (polarity ? zeroBitPositive2398.end() : zeroBitNegative2398.end())
-                );
-            return std::vector<Output>(begin, slowdown ? end : --end);
-        }
+        auto begin = (
+                bit
+                ? (polarity ? oneBitPositive2398.begin() : oneBitNegative2398.begin())
+                : (polarity ? zeroBitPositive2398.begin() : zeroBitNegative2398.begin())
+            );
+        auto end = (
+                bit
+                ? (polarity ? oneBitPositive2398.end() : oneBitNegative2398.end())
+                : (polarity ? zeroBitPositive2398.end() : zeroBitNegative2398.end())
+            );
+        return std::vector<Output>(begin, slowdown ? end : --end);
+    }
+
+    inline constexpr static std::vector<Output> _get_bit_25_fps(bool bit, bool polarity)
+    {
+        auto begin = (
+                bit
+                ? (polarity ? oneBitPositive25.begin() : oneBitNegative25.begin())
+                : (polarity ? zeroBitPositive25.begin() : zeroBitNegative25.begin())
+            );
+        auto end = (
+                bit
+                ? (polarity ? oneBitPositive25.end() : oneBitNegative25.end())
+                : (polarity ? zeroBitPositive25.end() : zeroBitNegative25.end())
+            );
+        return std::vector<Output>(begin, end);
+    }
+
+    inline constexpr static std::vector<Output> _get_bit_30_fps(bool slowdown, bool bit, bool polarity)
+    {
         auto begin = (
                 bit
                 ? (polarity ? oneBitPositive2997.begin() : oneBitNegative2997.begin())
@@ -760,6 +764,22 @@ public:
             );
         return std::vector<Output>(begin, slowdown ? end : --end);
     }
+
+    constexpr static std::vector<Output> get(int fps, bool slowdown, bool bit, bool polarity)
+    {
+        /* Returns a vector of samples for specified bit */
+        switch (fps)
+        {
+            case 24:
+                return _get_bit_24_fps(slowdown, bit, polarity);
+            case 25:
+                return _get_bit_25_fps(bit, polarity);
+            case 30:
+                return _get_bit_30_fps(slowdown, bit, polarity);
+        }
+    }
+
+};
 
 };
 

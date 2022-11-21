@@ -73,7 +73,7 @@ void Base<T, I>::set_size(int_fast32_t bufferSize, int_fast8_t ringSize)
     if (bufferSize > (
             std::numeric_limits<int_fast32_t>::max()
             / static_cast<int_fast32_t>(ringSize)
-            / bytesPerSample
+            / sizeof(T)
         ))
     {
         throw BUFFER_LENGTH_TOO_LONG;
@@ -94,7 +94,7 @@ void Base<T, I>::set_size(int_fast32_t bufferSize, int_fast8_t ringSize)
             this->_totalRingSampleLength
             - this->_bufferLength
         );
-    this->_bytesPerBuffer = this->_bufferLength * bytesPerSample;
+    this->_bytesPerBuffer = this->_bufferLength * sizeof(T);
     this->_samplesUnwritten = this->_bufferLength;
     this->_samplesWritten = 0;
     this->_samplesUnread = this->_bufferLength;
@@ -113,7 +113,7 @@ int_fast32_t Base<T, I>::size() const
 template <typename T, typename I>
 int_fast32_t Base<T, I>::total_size() const
 {
-    return this->_totalRingSampleLength * bytesPerSample;
+    return this->_totalRingSampleLength * sizeof(T);
 }
 
 template <typename T, typename I>
@@ -129,9 +129,9 @@ int_fast32_t Base<T, I>::buffer_length() const
 }
 
 template <typename T, typename I>
-int_fast32_t Base<T, I>::bytes_per_sample() const
+constexpr int_fast32_t Base<T, I>::bytes_per_sample()
 {
-    return bytesPerSample;
+    return sizeof(T);
 }
 
 template <typename T, typename I>
@@ -175,7 +175,7 @@ inline int_fast32_t Base<T, I>::buffered() const
 template <typename T, typename I>
 inline int_fast32_t Base<T, I>::bytes_buffered() const
 {
-    return buffered() * bytesPerSample;
+    return buffered() * sizeof(T);
 }
 
 template <typename T, typename I>
@@ -187,7 +187,7 @@ inline int_fast32_t Base<T, I>::available() const
 template <typename T, typename I>
 inline int_fast32_t Base<T, I>::bytes_available() const
 {
-    return available() * bytesPerSample;
+    return available() * sizeof(T);
 }
 
 template <typename T, typename I>
@@ -199,7 +199,7 @@ inline int_fast32_t Base<T, I>::processed() const
 template <typename T, typename I>
 inline int_fast32_t Base<T, I>::bytes_processed() const
 {
-    return processed() * bytesPerSample;
+    return processed() * sizeof(T);
 }
 
 template <typename T, typename I>
@@ -211,7 +211,7 @@ inline int_fast32_t Base<T, I>::unprocessed() const
 template <typename T, typename I>
 inline int_fast32_t Base<T, I>::bytes_unprocessed() const
 {
-    return unprocessed() * bytesPerSample;
+    return unprocessed() * sizeof(T);
 }
 
 template <typename T, typename I>
@@ -223,7 +223,7 @@ inline int_fast32_t Base<T, I>::unread() const
 template <typename T, typename I>
 inline int_fast32_t Base<T, I>::bytes_unread() const
 {
-    return unread() * bytesPerSample;
+    return unread() * sizeof(T);
 }
 
 template <typename T, typename I>
@@ -235,7 +235,7 @@ inline int_fast32_t Base<T, I>::unwritten() const
 template <typename T, typename I>
 inline int_fast32_t Base<T, I>::bytes_unwritten() const
 {
-    return unwritten() * bytesPerSample;
+    return unwritten() * sizeof(T);
 }
 
 template <typename T, typename I>
@@ -321,10 +321,10 @@ template <typename T, typename I>
 inline void Base<T, I>::report_read_bytes(int_fast32_t numBytes)
 {
     #if _DEBUG
-    if (numBytes % bytesPerSample) throw NON_MULTIPLE_BYTE_COUNT;
+    if (numBytes % sizeof(T)) throw NON_MULTIPLE_BYTE_COUNT;
     #endif
 
-    report_read_samples(numBytes / bytesPerSample);
+    report_read_samples(numBytes / sizeof(T));
 }
 
 template <typename T, typename I>
@@ -407,10 +407,10 @@ template <typename T, typename I>
 inline void Base<T, I>::report_written_bytes(int_fast32_t numBytes)
 {
     #if _DEBUG
-    if (numBytes % bytesPerSample) throw NON_MULTIPLE_BYTE_COUNT;
+    if (numBytes % sizeof(T)) throw NON_MULTIPLE_BYTE_COUNT;
     #endif
 
-    report_written_samples(numBytes / bytesPerSample);
+    report_written_samples(numBytes / sizeof(T));
 }
 
 template <typename T, typename I>
@@ -478,10 +478,10 @@ template <typename T, typename I>
 inline void Base<T, I>::report_processed_bytes(int_fast32_t numBytes)
 {
     #if _DEBUG
-    if (numBytes % bytesPerSample) throw NON_MULTIPLE_BYTE_COUNT;
+    if (numBytes % sizeof(T)) throw NON_MULTIPLE_BYTE_COUNT;
     #endif
 
-    report_processed_samples(numBytes / bytesPerSample);
+    report_processed_samples(numBytes / sizeof(T));
 }
 
 template <typename T, typename I>
@@ -501,29 +501,22 @@ RingBuffer<T, I>::RingBuffer(const RingBuffer& obj) :
 Base<T, I>(obj)
 {
     set_size(obj.buffer_length(), obj.ring_length());
-    
-    std::copy(
-            obj.ring.begin(),
-            obj.ring.end(),
-            this->ring.begin()
-        );
-
-    // for (int_fast8_t i(0); i < this->_ringLength; ++i)
-    // {
-    //     #if _DEBUG
-    //     std::copy(
-    //             obj.ring.at(i).begin(),
-    //             obj.ring.at(i).end(),
-    //             this->ring.at(i).begin()
-    //         );
-    //     #else
-    //     std::copy(
-    //             obj.ring[i].begin(),
-    //             obj.ring[i].end(),
-    //             this->ring[i].begin()
-    //         );
-    //     #endif
-    // }
+    for (int_fast8_t i(0); i < this->_ringLength; ++i)
+    {
+        #if _DEBUG
+        std::copy(
+                obj.ring.at(i).begin(),
+                obj.ring.at(i).end(),
+                this->ring.at(i).begin()
+            );
+        #else
+        std::copy(
+                obj.ring[i].begin(),
+                obj.ring[i].end(),
+                this->ring[i].begin()
+            );
+        #endif
+    }
 }
 
 template <typename T, typename I>
@@ -557,18 +550,6 @@ void RingBuffer<T, I>::set_size(int_fast32_t bufferSize, int_fast8_t ringSize)
 template <typename T, typename I>
 void RingBuffer<T, I>::fill(T value)
 {
-    // for (int_fast32_t i(1); i < this->_ringLength; ++i)
-    // {
-    //     for (int_fast32_t j(0); j < this->_bufferLength; ++j)
-    //     {
-    //         #if _DEBUG
-    //         this->ring.at(i).at(j) = value;
-    //         #else
-    //         this->ring[i][j] = value;
-    //         #endif
-    //     }
-    // }
-
     for (int_fast32_t i(0); i < this->_bufferLength; ++i)
     {
         #if _DEBUG
@@ -687,7 +668,7 @@ template <typename T, typename I>
 void RingBuffer<T, I>::read_bytes(uint8_t* data, int_fast32_t numBytes)
 {
     #if _DEBUG
-    if (numBytes % Base<T, I>::bytesPerSample)
+    if (numBytes % sizeof(T))
     {
         throw NON_MULTIPLE_BYTE_COUNT;
     }
@@ -695,7 +676,7 @@ void RingBuffer<T, I>::read_bytes(uint8_t* data, int_fast32_t numBytes)
 
     read_samples(
             reinterpret_cast<T*>(data),
-            numBytes / Base<T, I>::bytesPerSample
+            numBytes / sizeof(T)
         );
 }
 
@@ -855,7 +836,7 @@ int_fast32_t RingBuffer<T, I>::write_bytes(
     return write(std::vector<T>(
             reinterpret_cast<T*>(data),
             reinterpret_cast<T*>(data + numBytes)
-        ), force) * Base<T, I>::bytesPerSample;
+        ), force) * sizeof(T);
 }
 
 template <typename T, typename I>

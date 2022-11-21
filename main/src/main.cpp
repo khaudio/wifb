@@ -22,89 +22,89 @@
 /*                              Macros                              */
 
 /* I2S master clock */
-#define I2S_MCK                     (GPIO_NUM_0)
+#define I2S_MCK                             (GPIO_NUM_0)
 
 /* I2S word select */
-#define I2S_WS                      (GPIO_NUM_26)
+#define I2S_WS                              (GPIO_NUM_26)
 
 /* I2S bit clock */
-#define I2S_BCK                     (GPIO_NUM_14)
+#define I2S_BCK                             (GPIO_NUM_14)
 
 /* I2S data */
-#define I2S_DI                      (GPIO_NUM_35)
+#define I2S_DI                              (GPIO_NUM_35)
 
 /* I2S output data */
-#define I2S_DO                      (GPIO_NUM_25)
+#define I2S_DO                              (GPIO_NUM_25)
 
 /* Shutdown signal output */
-#define I2S_SHUTDOWN                (GPIO_NUM_21)
+#define I2S_SHUTDOWN                        (GPIO_NUM_21)
 
 /* Momentary switch */
-#define BUTTON_PIN                  (GPIO_NUM_35)
+#define BUTTON_PIN                          (GPIO_NUM_35)
 
 /* Audio sample rate */
 #ifndef SAMPLE_RATE
-#define SAMPLE_RATE                 48000
+#define SAMPLE_RATE                         48000
 #endif
 
 /* Bit depth for audio I/O */
 #ifndef BITS_PER_SAMPLE
-#define BITS_PER_SAMPLE             16
+#define BITS_PER_SAMPLE                     16
 #endif
 
 /* Mono or stereo */
 #ifndef NUM_CHANNELS
-#define NUM_CHANNELS                1
+#define NUM_CHANNELS                        1
 #endif
 
 /* Sample width in bytes */
-#define SAMPLE_WIDTH                ((BITS_PER_SAMPLE) / 8)
+#define SAMPLE_WIDTH                        ((BITS_PER_SAMPLE) / 8)
 
 /* Audio data type depends on bit depth */
 #if ((BITS_PER_SAMPLE) == 8)
-#define AUDIO_DATATYPE              uint8_t
+#define AUDIO_DATATYPE                      uint8_t
 #elif ((BITS_PER_SAMPLE) == 16)
-#define AUDIO_DATATYPE              int16_t
+#define AUDIO_DATATYPE                      int16_t
 #elif ((BITS_PER_SAMPLE) == 24)
-#define AUDIO_DATATYPE              int_fast32_t
+#define AUDIO_DATATYPE                      int_fast32_t
 #elif ((BITS_PER_SAMPLE) == 32)
-#define AUDIO_DATATYPE              int_fast32_t
+#define AUDIO_DATATYPE                      int_fast32_t
 #endif
 
 /* Length in samples of each buffer in ring */
 #ifndef RING_BUFFER_LENGTH
-#define RING_BUFFER_LENGTH          128
+#define RING_BUFFER_LENGTH                  128
 #endif
 
 /* Number of buffers in ring buffer */
 #ifndef RING_LENGTH
-#define RING_LENGTH                 2
+#define RING_LENGTH                         2
 #endif
 
 /* Size in bytes of each buffer in ring */
-#define RING_BUFFER_SIZE            ((RING_BUFFER_LENGTH) * (SAMPLE_WIDTH))
+#define RING_BUFFER_SIZE                    ((RING_BUFFER_LENGTH) * (SAMPLE_WIDTH))
 
 /* Size in bytes of each transmission via socket */
 #ifndef TRANSMIT_CHUNKSIZE
 #if ((RING_BUFFER_SIZE) >= 1024)
-#define TRANSMIT_CHUNKSIZE          ((RING_BUFFER_SIZE) / 16)
+#define TRANSMIT_CHUNKSIZE                  ((RING_BUFFER_SIZE) / 16)
 #elif ((RING_BUFFER_SIZE) >= 512)
-#define TRANSMIT_CHUNKSIZE          ((RING_BUFFER_SIZE) / 8)
+#define TRANSMIT_CHUNKSIZE                  ((RING_BUFFER_SIZE) / 8)
 #elif ((RING_BUFFER_SIZE) >= 256)
-#define TRANSMIT_CHUNKSIZE          ((RING_BUFFER_SIZE) / 4)
+#define TRANSMIT_CHUNKSIZE                  ((RING_BUFFER_SIZE) / 4)
 #else
-#define TRANSMIT_CHUNKSIZE          (RING_BUFFER_SIZE)
+#define TRANSMIT_CHUNKSIZE                  (RING_BUFFER_SIZE)
 #endif
 #endif
 
 /* Whether this unit defaults to transmit mode */
 #ifndef DEFUALT_MODE_TRANSMIT
-#define DEFUALT_MODE_TRANSMIT        0
+#define DEFUALT_MODE_TRANSMIT               0
 #endif
 
 /* Transmitter ipv4 address */
 #ifndef TRANSMITTER_IPV4_ADDR
-#define TRANSMITTER_IPV4_ADDR       "192.168.4.1"
+#define TRANSMITTER_IPV4_ADDR               "192.168.4.1"
 #endif
 
 /*                             Variables                            */
@@ -212,11 +212,11 @@ void i2s_to_ring_buffer(void)
 void i2s_to_buffer_loop(void)
 {
     DEBUG_OUT("Running i2s_to_buffer_loop...\n");
-    int delayCounter(0);
+    DELAY_COUNTER_INT(0);
     while (true)
     {
         i2s_to_ring_buffer();
-        delay_ticks_count(&delayCounter, 125, 1);
+        DELAY_TICKS_AT_COUNT(125);
     }
     DEBUG_ERR("i2s_to_buffer_loop exited unexpectedly\n");
 }
@@ -242,11 +242,11 @@ void ring_buffer_to_i2s(void)
 void buffer_to_i2s_loop(void)
 {
     DEBUG_OUT("Running buffer_to_i2s_loop...\n");
-    int delayCounter(0);
+    DELAY_COUNTER_INT(0);
     while (true)
     {
         ring_buffer_to_i2s();
-        delay_ticks_count(&delayCounter, 125, 1);
+        DELAY_TICKS_AT_COUNT(125);
     }
     DEBUG_ERR("buffer_to_i2s_loop exited unexpectedly\n");
 }
@@ -267,11 +267,11 @@ void buffer_to_i2s_loop(void)
 
 // void osc_to_buffer_loop(void)
 // {
-//     int delayCounter(0);
+//     DELAY_COUNTER_INT(0);
 //     while (true)
 //     {
 //         osc_to_ring_buffer();
-//         delay_ticks_count(&delayCounter, 125, 1);
+//         DELAY_TICKS_AT_COUNT(125);
 //     }
 // }
 
@@ -465,7 +465,7 @@ void socket_server_tcp(void)
         return;
     }
 
-    int delayCounter(0);
+    DELAY_COUNTER_INT(0);
     uint8_t incomingMacAddr[6];
     socklen_t clientAddressLength;
     int clientSock;
@@ -532,9 +532,7 @@ void socket_server_tcp(void)
 
         DEBUG_OUT("Client handler launched\n");
         
-        DEBUG_OUT("Incrementing delay counter...\n");
-        delay_ticks_count(&delayCounter, 125, 1);
-        DEBUG_OUT("Delay counter incremented\n");
+        DELAY_TICKS_AT_COUNT(125);
     }
     DEBUG_ERR("Exiting socket_server_tcp\n");
 }
@@ -544,7 +542,7 @@ void socket_server_udp(void)
     DEBUG_OUT("Starting udp socket server\n");
 
     int rc;
-    int delayCounter(0);
+    DELAY_COUNTER_INT(0);
     uint8_t rx_buffer[128];
     const char* tx_buffer = "hello from socket_server_udp";
     struct sockaddr_in serverAddress;
@@ -645,7 +643,7 @@ void socket_server_udp(void)
             }
             DEBUG_OUT("Data sent\n");
 
-            delay_ticks_count(&delayCounter, 125, 1);
+            DELAY_TICKS_AT_COUNT(125);
         }
 
         if (self.sock != -1)
@@ -661,7 +659,7 @@ void socket_server_udp(void)
 
 void client_sock_handler(std::shared_ptr<WIFBDevice> client)
 {
-    int delayCounter(0);
+    DELAY_COUNTER_INT(0);
     int rc;
 
     int_fast8_t numReaders = ringBuffer.num_readers();
@@ -710,9 +708,7 @@ void client_sock_handler(std::shared_ptr<WIFBDevice> client)
         }
 
         DEBUG_OUT("Incrementing delay counter\n");
-
-        delay_ticks_count(&delayCounter, 125, 1);
-
+        DELAY_TICKS_AT_COUNT(125);
         DEBUG_OUT("Cycling...\n");
     }
 
@@ -919,7 +915,7 @@ void socket_client_tcp(void)
         DEBUG_OUT("Send self mac addr: " << mac_addr_string(self.mac) << '\n');
     }
 
-    int delayCounter(0);
+    DELAY_COUNTER_INT(0);
 
     while (self.socketConnected)
     {
@@ -940,7 +936,7 @@ void socket_client_tcp(void)
 
             ringBuffer.report_written_bytes(TRANSMIT_CHUNKSIZE);
         }
-        delay_ticks_count(&delayCounter, 125, 1);
+        DELAY_TICKS_AT_COUNT(125);
     }
 
     DEBUG_OUT("Closing socket...\n");
@@ -958,7 +954,7 @@ void socket_client_udp(void)
     DEBUG_OUT("Starting socket_client_udp...\n");
 
     const char* tx_buffer = "hello from socket_client_udp";
-    int delayCounter(0);
+    DELAY_COUNTER_INT(0);
     int rc;
 
     uint8_t rx_buffer[128];
@@ -1037,7 +1033,7 @@ void socket_client_udp(void)
                 DEBUG_OUT("\n\t" << rx_buffer << '\n');
             }
 
-            delay_ticks_count(&delayCounter, 125, 1);
+            DELAY_TICKS_AT_COUNT(0);
         }
 
         if (self.sock != -1)

@@ -5,8 +5,8 @@
 
 #if _DEBUG
 
-#define DEBUG_OUT(x)                std::cout << x
-#define DEBUG_ERR(x)                std::cerr << x
+#define DEBUG_OUT(x)                        std::cout << x
+#define DEBUG_ERR(x)                        std::cerr << x
 
 #else
 

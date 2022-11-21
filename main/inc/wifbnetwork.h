@@ -29,11 +29,11 @@
 
 /*                              Macros                              */
 
-#define WIFI_CONNECTED_BIT          BIT0
-#define WIFI_FAIL_BIT               BIT1
+#define WIFI_CONNECTED_BIT                  BIT0
+#define WIFI_FAIL_BIT                       BIT1
 
 #ifndef MAX_RETRY_COUNT
-#define MAX_RETRY_COUNT             8
+#define MAX_RETRY_COUNT                     8
 #endif
 
 /*                           Declarations                           */
