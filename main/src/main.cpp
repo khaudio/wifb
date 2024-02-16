@@ -1,6 +1,6 @@
 /** WIFB
  * ESP32-based wireless audio transceiver
- * Copyright 2022 K Hughes Production LLC
+ * Copyright 2024 K Hughes Production LLC
  */
 
 #include <iostream>
@@ -14,10 +14,7 @@
 #include "esp32button.h"
 #include "espi2s.h"
 #include "wifbnetwork.h"
-// #include "ltcstaticwavetables.h"
-
-// #include "oscillator.h"
-
+#include "wifbmetadata.h"
 
 /*                              Macros                              */
 
@@ -39,22 +36,27 @@
 /* Shutdown signal output */
 #define I2S_SHUTDOWN                        (GPIO_NUM_21)
 
+/* Whether to enable i2s or simulate I/O */
+#ifndef I2S_ENABLED
+#define I2S_ENABLED                         (true)
+#endif
+
 /* Momentary switch */
 #define BUTTON_PIN                          (GPIO_NUM_35)
 
 /* Audio sample rate */
 #ifndef SAMPLE_RATE
-#define SAMPLE_RATE                         48000
+#define SAMPLE_RATE                         (48000)
 #endif
 
 /* Bit depth for audio I/O */
 #ifndef BITS_PER_SAMPLE
-#define BITS_PER_SAMPLE                     16
+#define BITS_PER_SAMPLE                     (16)
 #endif
 
 /* Mono or stereo */
 #ifndef NUM_CHANNELS
-#define NUM_CHANNELS                        1
+#define NUM_CHANNELS                        (1)
 #endif
 
 /* Sample width in bytes */
@@ -73,38 +75,46 @@
 
 /* Length in samples of each buffer in ring */
 #ifndef RING_BUFFER_LENGTH
-#define RING_BUFFER_LENGTH                  128
+#define RING_BUFFER_LENGTH                  (128)
 #endif
 
 /* Number of buffers in ring buffer */
 #ifndef RING_LENGTH
-#define RING_LENGTH                         2
+#define RING_LENGTH                         (2)
 #endif
 
-/* Size in bytes of each buffer in ring */
-#define RING_BUFFER_SIZE                    ((RING_BUFFER_LENGTH) * (SAMPLE_WIDTH))
+/* Size in bytes of each buffer in ring/transmission payload */
+#define RING_BUFFER_SIZE                    ( \
+        (RING_BUFFER_LENGTH) * (SAMPLE_WIDTH) \
+    )
 
-/* Size in bytes of each transmission via socket */
-#ifndef TRANSMIT_CHUNKSIZE
+/* Size in bytes of each data chunk transmitted via socket */
+#ifndef TRANSMIT_DATA_CHUNKSIZE
 #if ((RING_BUFFER_SIZE) >= 1024)
-#define TRANSMIT_CHUNKSIZE                  ((RING_BUFFER_SIZE) / 16)
+#define TRANSMIT_DATA_CHUNKSIZE             ((RING_BUFFER_SIZE) / 16)
 #elif ((RING_BUFFER_SIZE) >= 512)
-#define TRANSMIT_CHUNKSIZE                  ((RING_BUFFER_SIZE) / 8)
+#define TRANSMIT_DATA_CHUNKSIZE             ((RING_BUFFER_SIZE) / 8)
 #elif ((RING_BUFFER_SIZE) >= 256)
-#define TRANSMIT_CHUNKSIZE                  ((RING_BUFFER_SIZE) / 4)
+#define TRANSMIT_DATA_CHUNKSIZE             ((RING_BUFFER_SIZE) / 4)
 #else
-#define TRANSMIT_CHUNKSIZE                  (RING_BUFFER_SIZE)
+#define TRANSMIT_DATA_CHUNKSIZE             (RING_BUFFER_SIZE)
 #endif
+#endif
+
+#ifndef TRANSMISSION_SIZE
+#define TRANSMISSION_SIZE                   ( \
+        (TRANSMIT_DATA_CHUNKSIZE) + (METADATA_SIZE) \
+    )
 #endif
 
 /* Whether this unit defaults to transmit mode */
 #ifndef DEFUALT_MODE_TRANSMIT
-#define DEFUALT_MODE_TRANSMIT               0
+#define DEFUALT_MODE_TRANSMIT               (false)
 #endif
 
 /* Transmitter ipv4 address */
 #ifndef TRANSMITTER_IPV4_ADDR
-#define TRANSMITTER_IPV4_ADDR               "192.168.4.1"
+#define TRANSMITTER_IPV4_ADDR               ("192.168.4.1")
 #endif
 
 /*                             Variables                            */
@@ -123,6 +133,7 @@ static I2S::Bus i2s;
 static Esp32Button::DualActionButton button(BUTTON_PIN);
 
 static WIFBDevice self;
+static WIFBMetadata metadata;
 static std::vector<std::shared_ptr<WIFBDevice>> connectedClients;
 static int retryNum = 0;
 static EventGroupHandle_t staEventGroup;
@@ -179,13 +190,8 @@ extern "C" void app_main(void);
 
 void i2s_to_ring_buffer(void)
 {
-    // DEBUG_OUT("Getting available samples...\n");
-
     /* Read from i2s input to ring buffer */
     const int unwritten(ringBuffer.unwritten());
-
-    // DEBUG_OUT(+unwritten << " unwritten samples");
-    // DEBUG_OUT(" available to write to ring buffer\n");
 
     if (!unwritten) return;
 
@@ -193,7 +199,11 @@ void i2s_to_ring_buffer(void)
     {
         DEBUG_OUT("Reading from i2s...\n");
 
+        #if I2S_ENABLED
         i2s.read(ringBuffer.get_write_buffer(), unwritten);
+        #else
+        std::memset(ringBuffer.get_write_byte(), 0, (unwritten / SAMPLE_WIDTH));
+        #endif
 
         DEBUG_OUT("Read from i2s\n");
     }
@@ -235,7 +245,13 @@ void ring_buffer_to_i2s(void)
     }
     #endif
     
+    #if I2S_ENABLED
     i2s.write(ringBuffer.get_read_buffer(), unread);
+    #endif
+
+    DEBUG_OUT("Reporting " << unread);
+    DEBUG_OUT(" read samples to ring buffer\n");
+
     ringBuffer.report_read_samples(unread);
 }
 
@@ -304,14 +320,18 @@ void ap_event_handler(
     if (eventId == WIFI_EVENT_AP_STACONNECTED)
     {
         #if _DEBUG
-        wifi_event_ap_staconnected_t* event = reinterpret_cast<wifi_event_ap_staconnected_t*>(data);
+        wifi_event_ap_staconnected_t* event = (
+                reinterpret_cast<wifi_event_ap_staconnected_t*>(data)
+            );
         DEBUG_OUT("Station " << mac_addr_string(event->mac) << " connected\n");
         DEBUG_OUT("eventBase == " << eventBase << '\n');
         #endif
     }
     else if (eventId == WIFI_EVENT_AP_STADISCONNECTED)
     {
-        wifi_event_ap_stadisconnected_t* event = reinterpret_cast<wifi_event_ap_stadisconnected_t*>(data);
+        wifi_event_ap_stadisconnected_t* event = (
+                reinterpret_cast<wifi_event_ap_stadisconnected_t*>(data)
+            );
         
         std::shared_ptr<WIFBDevice> client = get_client_from_mac(event->mac);
         if (client != nullptr)
@@ -374,7 +394,7 @@ int config_ap(void)
     esp_wifi_set_config(WIFI_IF_AP, &config);
     esp_wifi_get_mac(WIFI_IF_AP, self.mac);
     esp_err_t rc = esp_wifi_start();
-    return (rc != ESP_OK) ? rc : 0;
+    return ((rc != ESP_OK) ? rc : 0);
 }
 
 void purge_disconnected_clients()
@@ -448,7 +468,11 @@ void socket_server_tcp(void)
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
     serverAddress.sin_port = htons(CONFIG_PORT);
-    int rc = bind(sock, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
+    int rc = bind(
+            sock,
+            (struct sockaddr*)&serverAddress,
+            sizeof(serverAddress)
+        );
     if (rc < 0)
     {
         DEBUG_OUT("bind: " << rc << errno << '\n');
@@ -474,16 +498,23 @@ void socket_server_tcp(void)
     while (true)
     {
         DEBUG_OUT("Listening for new connections...\n");
-        DEBUG_OUT("Accepting connection from client...\n");
 
         // Listen for a new client connection.
         clientAddressLength = sizeof(clientAddress);
-        clientSock = accept(sock, (struct sockaddr*)&clientAddress, &clientAddressLength);
+        clientSock = accept(
+                sock,
+                (struct sockaddr*)&clientAddress,
+                &clientAddressLength
+            );
+
+
         if (clientSock < 0)
         {
             DEBUG_OUT("accept: " << clientSock << " " << errno << '\n');
             return;
         }
+
+        DEBUG_OUT("Accepted connection from client\n");
 
         // Index client mac address
         recv(clientSock, incomingMacAddr, 6, 0);
@@ -504,8 +535,8 @@ void socket_server_tcp(void)
                 purge_disconnected_clients();
             }
 
-            memcpy(client->mac, incomingMacAddr, 6);
-            memcpy(
+            std::memcpy(client->mac, incomingMacAddr, 6);
+            std::memcpy(
                     client->ip,
                     reinterpret_cast<uint8_t*>(&clientAddress.sin_addr.s_addr),
                     4
@@ -680,32 +711,79 @@ void client_sock_handler(std::shared_ptr<WIFBDevice> client)
 
     DEBUG_OUT("Num readers set to " << +ringBuffer.num_readers() << '\n');
 
+    DEBUG_OUT("Zeroing sendBuff\n");
+    uint8_t sendBuff[TRANSMISSION_SIZE];
+    std::memset(sendBuff, 0, TRANSMISSION_SIZE);
+
     while (client->socketConnected)
     {
         DEBUG_OUT(ringBuffer.buffered() << " samples buffered");
         DEBUG_OUT(" of total ring sample length of ");
         DEBUG_OUT(ringBuffer.size() << '\n');
-        DEBUG_OUT("Transmit chunk size is " << (TRANSMIT_CHUNKSIZE) << '\n');
+        DEBUG_OUT("Transmission size is " << (TRANSMISSION_SIZE) << "; ");
+        DEBUG_OUT("Transmission data chunk size is " << (TRANSMIT_DATA_CHUNKSIZE) << '\n');
 
-        if (ringBuffer.buffered() >= (TRANSMIT_CHUNKSIZE))
+        /* Update metadata with current timecode using metadata.set_timecode() */
+
+        int unreadBytes(ringBuffer.bytes_unread());
+
+        if (unreadBytes >= (TRANSMIT_DATA_CHUNKSIZE))
         {
             DEBUG_OUT("Sending data to client\n");
+            DEBUG_OUT("Copying data from ringBuffer to sendBuff\n");
 
+            /* Copy audio data to send buffer */
+            std::memcpy(
+                    &(sendBuff[0]),
+                    ringBuffer.get_read_byte(),
+                    (TRANSMIT_DATA_CHUNKSIZE)
+                );
+
+            DEBUG_OUT("Copying data from metadata.data to sendBuff\n");
+            DEBUG_OUT("Sending timecode: " << std::setfill('0'));
+            for (int i(0); i < 4; ++i)
+            {
+                DEBUG_OUT(std::setw(2) << +(metadata.timecode[i]) << ((i == 3) ? '\n' : ':'));
+            }
+
+            /* Copy metadata to buffer */
+            metadata.get_data(&(sendBuff[(TRANSMIT_DATA_CHUNKSIZE)]));
+
+            DEBUG_OUT("Sending " << +(TRANSMISSION_SIZE) << " bytes to socket\n");
+
+            /* Send buffered data to client */
             rc = send(
                     client->sock,
-                    ringBuffer.get_read_byte(),
-                    (TRANSMIT_CHUNKSIZE),
+                    sendBuff,
+                    (TRANSMISSION_SIZE),
                     0
                 );
+
             if (rc < 0)
             {
                 DEBUG_ERR("Error sending data\n");
             }
+
+            DEBUG_OUT("Sent timecode " << std::setfill('0'));
+            #if _DEBUG
+            for (int i(0); i < 4; ++i)
+            {
+                DEBUG_OUT(std::setw(2) << (+metadata.timecode[i]));
+                DEBUG_OUT(((i == 3) ? '\n' : ':'));
+            }
+            #endif
+
+            DEBUG_OUT("Reporting " << (TRANSMIT_DATA_CHUNKSIZE) << " read bytes to buffer\n");
             
-            DEBUG_OUT("Reporting " << (TRANSMIT_CHUNKSIZE) << " read bytes to buffer\n");
-            
-            ringBuffer.report_read_bytes(TRANSMIT_CHUNKSIZE);
+            ringBuffer.report_read_bytes(TRANSMIT_DATA_CHUNKSIZE);
         }
+        #if _DEBUG
+        else
+        {
+            DEBUG_OUT("ringBuffer.buffered() == " << ringBuffer.buffered());
+            DEBUG_OUT("\t(TRANSMIT_DATA_CHUNKSIZE) == " << (TRANSMIT_DATA_CHUNKSIZE) << '\n');
+        }
+        #endif
 
         DEBUG_OUT("Incrementing delay counter\n");
         DELAY_TICKS_AT_COUNT(125);
@@ -713,6 +791,10 @@ void client_sock_handler(std::shared_ptr<WIFBDevice> client)
     }
 
     DEBUG_OUT("Decrementing num readers for disconnected client\n");
+
+    // DEBUG_OUT("Dellocating sendBuff\n");
+    // delete sendBuff;
+    // DEBUG_OUT("Dellocated sendBuff\n");
 
     /* Do not decrement the read counter below one */
     ringBuffer.set_num_readers(
@@ -741,7 +823,10 @@ void sta_event_handler(
 
         esp_wifi_connect();
     }
-    else if ((eventBase == WIFI_EVENT) && (eventId == WIFI_EVENT_STA_DISCONNECTED))
+    else if (
+            (eventBase == WIFI_EVENT)
+            && (eventId == WIFI_EVENT_STA_DISCONNECTED)
+        )
     {
         DEBUG_ERR("Failed to connect to AP\n");
         
@@ -768,7 +853,7 @@ void sta_event_handler(
         self.networkConnected = true;
         self.socketConnected = false;
         
-        memcpy(
+        std::memcpy(
                 self.ip,
                 reinterpret_cast<uint8_t*>(&event->ip_info.ip),
                 4
@@ -916,25 +1001,80 @@ void socket_client_tcp(void)
     }
 
     DELAY_COUNTER_INT(0);
+    DEBUG_OUT("Allocating recvBuff\n");
+    uint8_t recvBuff[TRANSMISSION_SIZE];
+    std::memset(recvBuff, 0, TRANSMISSION_SIZE);
+    DEBUG_OUT("Allocated recvBuff of size " << sizeof(recvBuff) << '\n');
 
     while (self.socketConnected)
     {
-        if (ringBuffer.available() >= (TRANSMIT_CHUNKSIZE))
-        {
-            rc = recv(
-                    self.sock,
-                    ringBuffer.get_write_byte(),
-                    (TRANSMIT_CHUNKSIZE),
-                    0
-                );
-            if (rc < 0)
-            {
-                DEBUG_ERR("recv rc == " << rc << '\n');
-                self.socketConnected = false;
-                break;
-            }
 
-            ringBuffer.report_written_bytes(TRANSMIT_CHUNKSIZE);
+        DEBUG_OUT("Attempting to receive from socket...\n");
+
+        rc = recv(
+                self.sock,
+                recvBuff,
+                (TRANSMISSION_SIZE),
+                0
+            );
+        
+        DEBUG_OUT("Socket receive attempted\n");
+
+        if (rc < 0)
+        {
+            DEBUG_ERR("recv rc == " << rc << '\n');
+            self.socketConnected = false;
+            break;
+        }
+
+        if (ringBuffer.available() >= (TRANSMIT_DATA_CHUNKSIZE))
+        {
+
+            DEBUG_OUT("Copying data to ringBuffer from recvBuff\n");
+
+            std::memcpy(
+                    ringBuffer.get_write_byte(),
+                    recvBuff,
+                    (TRANSMIT_DATA_CHUNKSIZE)
+                );
+
+            DEBUG_OUT("Copied data to ringBuffer from recvBuff\n");
+            DEBUG_OUT("Extrapolating timecode from recvBuff\n");
+
+            // DEBUG_OUT("Printing recvBuff\n");
+            // for (int i(0); i < TRANSMISSION_SIZE; ++i)
+            // {
+            //     DEBUG_OUT(std::setw(2) << (+(i)) << ' ' << std::setfill('0'));
+            //     DEBUG_OUT(std::setw(2) << (+(recvBuff[i])) << '\n');
+            // }
+            // DEBUG_OUT('\n');
+
+            DEBUG_OUT("Setting receiver metadata from data...\n");
+
+            /* Extrapolate TC from metadata chunk */
+            metadata.set_data(&(recvBuff[(TRANSMIT_DATA_CHUNKSIZE)]));
+
+            DEBUG_OUT("Set receiver metadata from data\n");
+            DEBUG_OUT("Extrapolated timecode from recvBuff\n");
+            DEBUG_OUT("Received timecode " << std::setfill('0'));
+            #if _DEBUG
+            for (int i(0); i < 4; ++i)
+            {
+                DEBUG_OUT(std::setw(2) << (+metadata.timecode[i]));
+                DEBUG_OUT(((i == 3) ? '\n' : ':'));
+            }
+            #endif
+
+            // rc = recv(
+            //         self.sock,
+            //         ringBuffer.get_write_byte(),
+            //         (TRANSMIT_DATA_CHUNKSIZE),
+            //         0
+            //     );
+
+            DEBUG_OUT("Reporting " << (TRANSMIT_DATA_CHUNKSIZE) << " written bytes to buffer\n");
+
+            ringBuffer.report_written_bytes(TRANSMIT_DATA_CHUNKSIZE);
         }
         DELAY_TICKS_AT_COUNT(125);
     }
@@ -945,6 +1085,10 @@ void socket_client_tcp(void)
 
     DEBUG_OUT("close rc: " << rc << '\n');
     DEBUG_OUT("Socket closed\n");
+
+    // DEBUG_OUT("Deallocating recvBuff\n");
+    // delete recvBuff;
+    // DEBUG_OUT("Deallocated recvBuff\n");
 
     DEBUG_OUT("Exiting socket_client_tcp\n");
 }
@@ -1051,9 +1195,15 @@ extern "C" void app_main(void)
 {
     DEBUG_OUT("Initializing WIFB...\n");
 
+    /* Set timecode to dummy value */
+    metadata.set_timecode(12, 0, 0, 0);
+
     /* Set buffer to have one reader initially */
 
     ringBuffer.set_num_readers(1);
+    
+    DEBUG_OUT("Ring buffer audio datatype width is " << sizeof(AUDIO_DATATYPE));
+    DEBUG_OUT(" samples\n");
 
     /* Configure button and set transmit mode */
 
@@ -1066,6 +1216,8 @@ extern "C" void app_main(void)
     /* Configure i2s */
     
     DEBUG_OUT("Configuring i2s...\n");
+
+    #if I2S_ENABLED
     i2s.set_pin_master_clock(I2S_MCK);
     i2s.set_pin_bit_clock(I2S_BCK);
     i2s.set_pin_word_select(I2S_WS);
@@ -1080,6 +1232,8 @@ extern "C" void app_main(void)
         );
     i2s.set_auto_clear(true);
     i2s.start();
+    #endif
+
     DEBUG_OUT("i2s configuration complete\n");
     
     /* Configure networking */

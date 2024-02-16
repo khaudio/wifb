@@ -285,22 +285,22 @@ void Bus::read(std::vector<T>* data, int_fast32_t length)
     #endif
 }
 
-template void Bus::write<int8_t>(std::vector<int8_t>*, int_fast32_t);
+// template void Bus::write<int8_t>(std::vector<int8_t>*, int_fast32_t);
 template void Bus::write<uint8_t>(std::vector<uint8_t>*, int_fast32_t);
 template void Bus::write<int16_t>(std::vector<int16_t>*, int_fast32_t);
-template void Bus::write<uint16_t>(std::vector<uint16_t>*, int_fast32_t);
+// template void Bus::write<uint16_t>(std::vector<uint16_t>*, int_fast32_t);
 template void Bus::write<int32_t>(std::vector<int32_t>*, int_fast32_t);
-template void Bus::write<uint32_t>(std::vector<uint32_t>*, int_fast32_t);
+// template void Bus::write<uint32_t>(std::vector<uint32_t>*, int_fast32_t);
 
 template void Bus::write<int_fast8_t>(std::vector<int_fast8_t>*, int_fast32_t);
 template void Bus::write<uint_fast8_t>(std::vector<uint_fast8_t>*, int_fast32_t);
 
-template void Bus::read<int8_t>(std::vector<int8_t>*, int_fast32_t);
+// template void Bus::read<int8_t>(std::vector<int8_t>*, int_fast32_t);
 template void Bus::read<uint8_t>(std::vector<uint8_t>*, int_fast32_t);
 template void Bus::read<int16_t>(std::vector<int16_t>*, int_fast32_t);
-template void Bus::read<uint16_t>(std::vector<uint16_t>*, int_fast32_t);
+// template void Bus::read<uint16_t>(std::vector<uint16_t>*, int_fast32_t);
 template void Bus::read<int32_t>(std::vector<int32_t>*, int_fast32_t);
-template void Bus::read<uint32_t>(std::vector<uint32_t>*, int_fast32_t);
+// template void Bus::read<uint32_t>(std::vector<uint32_t>*, int_fast32_t);
 
 template void Bus::read<int_fast8_t>(std::vector<int_fast8_t>*, int_fast32_t);
 template void Bus::read<uint_fast8_t>(std::vector<uint_fast8_t>*, int_fast32_t);

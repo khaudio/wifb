@@ -14,15 +14,8 @@
 #include <stdexcept>
 #include <type_traits>
 
-/* Whether the first read index
-will be advanced automatically
-after the first write or whether it
-will be rotated manually.  Enabling
-this directive adds an additional check
-during each write buffer rotation.
-Disable for maximum performance. */
 #ifndef RINGBUFF_AUTO_FIRST_ROTATE
-#define RINGBUFF_AUTO_FIRST_ROTATE          1
+#define RINGBUFF_AUTO_FIRST_ROTATE  0
 #endif
 
 namespace Buffer
@@ -69,10 +62,6 @@ class NonAtomicMultiRingBuffer;
 template <typename T>
 class AtomicMultiRingBuffer;
 
-template <typename T>
-class AtomicMultiReadRingBuffer;
-
-
 template <typename T, typename I>
 class Base
 {
@@ -99,6 +88,8 @@ protected:
         _totalRingSampleLength;
 
 public:
+
+    static constexpr const int_fast32_t bytesPerSample = sizeof(T);
 
     I
         readIndex{0},
@@ -133,7 +124,7 @@ public:
     virtual int_fast32_t buffer_length() const;
 
     /* Number of bytes per sample */
-    constexpr static int_fast32_t bytes_per_sample();
+    virtual int_fast32_t bytes_per_sample() const;
 
     /* Size in bytes of each buffer in the ring */
     virtual int_fast32_t bytes_per_buffer() const;
