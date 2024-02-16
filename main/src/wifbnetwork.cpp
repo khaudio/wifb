@@ -40,3 +40,4 @@ bool match_mac_addr(const uint8_t addr1[6], const uint8_t addr2[6])
     }
     return true;
 }
+
